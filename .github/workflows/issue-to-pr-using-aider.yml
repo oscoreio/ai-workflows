@@ -125,6 +125,8 @@ jobs:
       - name: Create pull request
         if: steps.changes.outputs.has_changes == 'true'
         run: gh pr create -B main -H ${{ steps.branch.outputs.branch_name }} --title 'feat:@coderabbitai' --body '@coderabbitai summary'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         #env:
         #  GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
             
