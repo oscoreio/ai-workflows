@@ -56,12 +56,6 @@ jobs:
           git config --local user.email "bot@aider.com"
           git config --local user.name "github-actions[bot]"
 
-      - name: Install Aider
-        run: |
-          python -m venv myenv
-          source myenv/bin/activate
-          pip install aider-chat
-
       - name: Generate branch name
         id: branch
         run: echo "branch_name=aider/issue-${{ inputs.issue-number }}_$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
@@ -99,10 +93,13 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
           DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
           GROQ_API_KEY: ${{ secrets.groq-api-key }}
-        run: aider
-          --model "${{ inputs.model }}"
-          --yes
-          --message "${{ steps.create_prompt.outputs.result }}"
+        run: |
+          python -m venv myenv
+          source myenv/bin/activate
+          
+          pip install aider-chat
+          
+          aider --model "${{ inputs.model }}" --yes --message "${{ steps.create_prompt.outputs.result }}"
 
       - name: Check for changes
         id: changes
