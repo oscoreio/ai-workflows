@@ -83,8 +83,8 @@ jobs:
               repo,
               issue_number: ${{ inputs.issue-number }}
             });
-            const title = result.data.title.replace(/"/g, "'").replace(/`/g, '\\`');
-            const body = result.data.body.replace(/"/g, "'").replace(/`/g, '\\`');
+            const title = result.data.title ? result.data.title.replace(/"/g, "'").replace(/`/g, '\\`') : "No title";
+            const body = result.data.body ? result.data.body.replace(/"/g, "'").replace(/`/g, '\\`') : "No description";
 
             return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below issue description. \nIssue title: ${title}\nIssue description:\n${body}`;
 
