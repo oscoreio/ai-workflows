@@ -98,7 +98,7 @@ jobs:
         run: |
           pip install aider-chat
           
-          aider --model "${{ inputs.model }}" --yes --message "${{ steps.create_prompt.outputs.result }}"
+          aider --model "${{ inputs.model }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits
 
       - name: Check for changes
         id: changes
