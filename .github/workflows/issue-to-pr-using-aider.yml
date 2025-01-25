@@ -93,10 +93,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
           DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
           GROQ_API_KEY: ${{ secrets.groq-api-key }}
+          # python -m venv myenv
+          # source myenv/bin/activate
         run: |
-          python -m venv myenv
-          source myenv/bin/activate
-          
           pip install aider-chat
           
           aider --model "${{ inputs.model }}" --yes --message "${{ steps.create_prompt.outputs.result }}"
