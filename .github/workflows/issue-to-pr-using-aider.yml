@@ -1,0 +1,138 @@
+name: Issue to PR using Aider
+on:
+  workflow_call:
+    inputs:
+      issue-number:
+        description: "Issue number"
+        required: true
+        type: number
+      model:
+        description: "Model to use"
+        required: false
+        type: string
+        default: "gpt-4o"
+      chat-timeout:
+        description: "Timeout for chat in minutes to prevent burning your credits"
+        required: false
+        type: number
+        default: 10
+    secrets:
+      openai-api-key:
+        description: "OpenAI API key"
+        required: false
+      anthropic-api-key:
+        description: "Anthropic API Key"
+        required: false
+      groq-api-key:
+        description: "Groq API Key"
+        required: false
+      gemini-api-key:
+        description: "Gemini API Key"
+        required: false
+      cohere-api-key:
+        description: "Cohere API Key"
+        required: false
+      openrouter-api-key:
+        description: "OpenRouter API Key"
+        required: false
+      deepseek-api-key:
+        description: "Deepseek API Key"
+        required: false
+
+jobs:
+  create-pull-request:
+    permissions:
+      issues: read
+      pull-requests: write
+      contents: write
+      
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Git user
+        run: |
+          git config --local user.email "bot@aider.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Install Aider
+        run: |
+          python -m venv myenv
+          source myenv/bin/activate
+          pip install aider-chat
+
+      - name: Generate branch name
+        id: branch
+        run: echo "branch_name=aider/issue-${{ inputs.issue-number }}_$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+
+      - name: Create branch
+        run: |
+          git checkout -b ${{ steps.branch.outputs.branch_name }} origin/main
+          git rebase main
+
+      - name: Create prompt
+        uses: actions/github-script@v7
+        id: create_prompt
+        with:
+          result-encoding: string
+          script: |
+            const { repo, owner } = context.repo;
+            const result = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: ${{ inputs.issue-number }}
+            });
+            const title = result.data.title.replace(/"/g, "'").replace(/`/g, '\\`');
+            const body = result.data.body.replace(/"/g, "'").replace(/`/g, '\\`');
+
+            return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below issue description. \nIssue title: ${title}\nIssue description:\n${body}`;
+
+      - name: Apply changes with Aider
+        timeout-minutes: ${{ inputs.chat-timeout }}
+        env:
+          # API keys - Used implicitly by Aider
+          OPENAI_API_KEY: ${{ secrets.openai-api-key }}
+          OPENROUTER_API_KEY: ${{ secrets.openrouter-api-key }}
+          ANTHROPIC_API_KEY: ${{ secrets.anthropic-api-key }}
+          COHERE_API_KEY: ${{ secrets.cohere-api-key }}
+          GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
+          DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
+          GROQ_API_KEY: ${{ secrets.groq-api-key }}
+        run: aider
+          --model "${{ inputs.model }}"
+          --yes
+          --message "${{ steps.create_prompt.outputs.result }}"
+
+      - name: Check for changes
+        id: changes
+        run: |
+          CHANGED=$(git diff --name-only)
+          if [ -z "$CHANGED" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git add .
+          git commit -m "feat: Updated OpenAPI spec"
+          git push --force-with-lease -u origin ${{ steps.branch.outputs.branch_name }}
+
+      - name: Wait for 15 seconds
+        if: steps.changes.outputs.has_changes == 'true'
+        run: sleep 15
+
+      - name: Create pull request
+        if: steps.changes.outputs.has_changes == 'true'
+        run: gh pr create -B main -H ${{ steps.branch.outputs.branch_name }} --title 'feat:@coderabbitai' --body '@coderabbitai summary'
+        #env:
+        #  GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+            
+      - name: Upload chat history
+        uses: actions/upload-artifact@v4
+        with:
+          name: aider-chat-output
+          path: ".aider.chat.history.md"
