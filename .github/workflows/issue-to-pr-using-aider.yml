@@ -21,6 +21,10 @@ on:
         required: false
         type: number
         default: 10
+      personal-access-token:
+        description: "Personal Access Token for PR creation"
+        required: false
+        type: string
     secrets:
       openai-api-key:
         description: "OpenAI API key"
@@ -119,7 +123,7 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true'
         run: |
           git add . ':!.gitignore'
-          git commit -m "feat: Updated OpenAPI spec"
+          git commit -m "feat: Closes issue #${{ inputs.issue-number }}"
           git push --force-with-lease -u origin ${{ steps.branch.outputs.branch_name }}
 
       - name: Wait for 15 seconds
@@ -128,12 +132,10 @@ jobs:
 
       - name: Create pull request
         if: steps.changes.outputs.has_changes == 'true'
-        run: gh pr create -B ${{ inputs.default-branch }} -H ${{ steps.branch.outputs.branch_name }} --title 'feat:@coderabbitai' --body '@coderabbitai summary'
+        run: gh pr create -B ${{ inputs.default-branch }} -H ${{ steps.branch.outputs.branch_name }} --title 'feat:@coderabbitai' --body '@coderabbitai summary \n\nCloses issue #${{ inputs.issue-number }}'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        #env:
-        #  GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
-            
+          GITHUB_TOKEN: ${{ secrets.personal-access-token || secrets.GITHUB_TOKEN }}
+
       - name: Upload chat history
         uses: actions/upload-artifact@v4
         with:
