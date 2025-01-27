@@ -21,11 +21,10 @@ on:
         required: false
         type: number
         default: 10
+    secrets:
       personal-access-token:
         description: "Personal Access Token for PR creation"
         required: false
-        type: string
-    secrets:
       openai-api-key:
         description: "OpenAI API key"
         required: false
