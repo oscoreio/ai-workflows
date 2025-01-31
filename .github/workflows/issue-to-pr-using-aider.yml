@@ -22,6 +22,12 @@ on:
         type: number
         default: 10
     secrets:
+      user-email:
+        description: "Email to set in git config --local user.email"
+        required: false
+      user-name:
+        description: "Email to set in git config --local user.name"
+        required: false
       personal-access-token:
         description: "Personal Access Token for PR creation"
         required: false
@@ -61,8 +67,8 @@ jobs:
 
       - name: Setup Git user
         run: |
-          git config --local user.email "bot@aider.com"
-          git config --local user.name "github-actions[bot]"
+          git config --local user.email '${{ secrets.user-email || "bot@aider.com" }}'
+          git config --local user.name '${{ secrets.user-name || "github-actions[bot]" }}'
 
       - name: Generate branch name
         id: branch
