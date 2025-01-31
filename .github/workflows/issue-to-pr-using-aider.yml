@@ -67,8 +67,8 @@ jobs:
 
       - name: Setup Git user
         run: |
-          git config --local user.email '${{ secrets.user-email || "bot@aider.com" }}'
-          git config --local user.name '${{ secrets.user-name || "github-actions[bot]" }}'
+          git config --local user.email "${{ secrets.user-email || 'bot@aider.com' }}"
+          git config --local user.name "${{ secrets.user-name || 'github-actions[bot]' }}"
 
       - name: Generate branch name
         id: branch
