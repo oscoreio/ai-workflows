@@ -21,6 +21,11 @@ on:
         required: false
         type: number
         default: 10
+      map-tokens:
+        description: "Map tokens"
+        required: false
+        type: number
+        default: 5000
     secrets:
       user-email:
         description: "Email to set in git config --local user.email"
@@ -112,7 +117,7 @@ jobs:
         run: |
           pip install aider-chat
           
-          aider --model "${{ inputs.model }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits
+          aider --model "${{ inputs.model }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} --no-gitignore
 
       - name: Check for changes
         id: changes
@@ -137,12 +142,22 @@ jobs:
 
       - name: Create pull request
         if: steps.changes.outputs.has_changes == 'true'
-        run: gh pr create -B ${{ inputs.default-branch }} -H ${{ steps.branch.outputs.branch_name }} --title 'feat:@coderabbitai' --body '@coderabbitai summary \n\nCloses issue \#${{ inputs.issue-number }}'
         env:
           GITHUB_TOKEN: ${{ secrets.personal-access-token || secrets.GITHUB_TOKEN }}
+        run: gh pr create
+          -B ${{ inputs.default-branch }}
+          -H ${{ steps.branch.outputs.branch_name }}
+          --title 'feat:@coderabbitai'
+          --body '@coderabbitai summary'
+
+      - name: Upload input history
+        uses: actions/upload-artifact@v4
+        with:
+          name: aider-input-history
+          path: ".aider.input.history"
 
       - name: Upload chat history
         uses: actions/upload-artifact@v4
         with:
-          name: aider-chat-output
+          name: aider-chat-history
           path: ".aider.chat.history.md"
