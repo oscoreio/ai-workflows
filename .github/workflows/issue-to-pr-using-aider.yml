@@ -90,16 +90,59 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const { repo, owner } = context.repo;
             const result = await github.rest.issues.get({
-              owner,
-              repo,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
               issue_number: ${{ inputs.issue-number }}
             });
             const title = result.data.title ? result.data.title.replace(/"/g, "'").replace(/`/g, '\\`') : "No title";
             const body = result.data.body ? result.data.body.replace(/"/g, "'").replace(/`/g, '\\`') : "No description";
 
             return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below issue description. \nIssue title: ${title}\nIssue description:\n${body}`;
+
+      - name: Try extract model from labels
+        uses: actions/github-script@v7
+        id: try_extract_model_from_labels
+        with:
+          result-encoding: string
+          script: |
+            const result = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue-number }}
+            });
+            const labels = result.data.labels;
+
+            if (labels.some(label => label.name.startsWith('aider-model-r1-free'))) {
+              return 'openrouter/deepseek/deepseek-r1:free';
+            }
+
+            const model = labels.find(label => label.name.startsWith('aider-model-'));
+            if (model) {
+              return model.name.split('ider-model-')[1];
+            }
+
+            return null;
+
+      - name: Try extract reasoning effort from labels
+        uses: actions/github-script@v7
+        id: try_extract_reasoning_effort_from_labels
+        with:
+          result-encoding: string
+          script: |
+            const result = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue-number }}
+            });
+            const labels = result.data.labels;
+
+            const reasoning_effort = labels.find(label => label.name.startsWith('aider-reasoning-effort-'));
+            if (reasoning_effort) {
+              return reasoning_effort.name.split('ider-reasoning-effort-')[1];
+            }
+
+            return null;
 
       - name: Apply changes with Aider
         timeout-minutes: ${{ inputs.chat-timeout }}
@@ -117,7 +160,7 @@ jobs:
         run: |
           pip install aider-chat
           
-          aider --model "${{ inputs.model }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} --no-gitignore
+          aider --model "${{ steps.try_extract_model_from_labels.outputs.result || inputs.model }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} --no-gitignore --reasoning-effort "${{ steps.try_extract_reasoning_effort_from_labels.outputs.result || 'medium' }}"
 
       - name: Check for changes
         id: changes
