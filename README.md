@@ -19,7 +19,7 @@ on:
 jobs:
   generate:
     uses: oscoreio/ai-workflows/.github/workflows/issue-to-pr-using-aider.yml@main
-    if: github.event.label.name == 'aider'
+    if: startsWith(github.event.label.name, 'aider')
     with:
       issue-number: ${{ github.event.issue.number }}
     secrets: 
