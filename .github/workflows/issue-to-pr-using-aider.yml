@@ -160,7 +160,7 @@ jobs:
         run: |
           pip install aider-chat
           
-          aider --model "${{ steps.try_extract_model_from_labels.outputs.result || inputs.model }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} --no-gitignore --reasoning-effort "${{ steps.try_extract_reasoning_effort_from_labels.outputs.result || 'medium' }}"
+          aider --model "${{ steps.try_extract_model_from_labels.outputs.result || inputs.model }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} --reasoning-effort "${{ steps.try_extract_reasoning_effort_from_labels.outputs.result || 'medium' }}"
 
       - name: Check for changes
         id: changes
@@ -197,10 +197,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: aider-input-history
-          path: ".aider.input.history"
+          path: .aider.input.history
 
       - name: Upload chat history
         uses: actions/upload-artifact@v4
         with:
           name: aider-chat-history
-          path: ".aider.chat.history.md"
+          path: .aider.chat.history.md
