@@ -155,12 +155,12 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
           DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
           GROQ_API_KEY: ${{ secrets.groq-api-key }}
-          # python -m venv myenv
-          # source myenv/bin/activate
+          
+        # --reasoning-effort "${{ steps.try_extract_reasoning_effort_from_labels.outputs.result || 'medium' }}"
         run: |
           pip install aider-chat
           
-          aider --model "${{ steps.try_extract_model_from_labels.outputs.result || inputs.model }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} --reasoning-effort "${{ steps.try_extract_reasoning_effort_from_labels.outputs.result || 'medium' }}"
+          aider --model "${{ steps.try_extract_model_from_labels.outputs.result || inputs.model }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }}
 
       - name: Check for changes
         id: changes
