@@ -1,0 +1,181 @@
+name: Comment to Commit using Aider
+on:
+  workflow_call:
+    inputs:
+      body:
+        description: "Body of the comment"
+        required: true
+        type: string
+      branch:
+        description: "Branch name"
+        required: true
+        type: string
+      issue-number:
+        description: "Issue number"
+        required: true
+        type: number
+      is-pull-request:
+        description: "Is pull request"
+        required: true
+        type: boolean
+      model:
+        description: "Model to use"
+        required: false
+        type: string
+        default: "o3-mini"
+      chat-timeout:
+        description: "Timeout for chat in minutes to prevent burning your credits"
+        required: false
+        type: number
+        default: 10
+      map-tokens:
+        description: "Map tokens"
+        required: false
+        type: number
+        default: 5000
+    secrets:
+      openai-api-key:
+        description: "OpenAI API key"
+        required: false
+      anthropic-api-key:
+        description: "Anthropic API Key"
+        required: false
+      groq-api-key:
+        description: "Groq API Key"
+        required: false
+      gemini-api-key:
+        description: "Gemini API Key"
+        required: false
+      cohere-api-key:
+        description: "Cohere API Key"
+        required: false
+      openrouter-api-key:
+        description: "OpenRouter API Key"
+        required: false
+      deepseek-api-key:
+        description: "Deepseek API Key"
+        required: false
+
+jobs:
+  create-commit:
+    permissions:
+      issues: read
+      pull-requests: write
+      contents: write
+      
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Setup Git user
+        run: |
+          git config --local user.email "bot@aider.com"
+          git config --local user.name "github-actions[bot]"
+
+      - name: Create prompt
+        uses: actions/github-script@v7
+        id: create_prompt
+        with:
+          result-encoding: string
+          script: |
+            return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below issue description. \Comment body: ${body}`;
+
+      - name: Try extract model from labels
+        uses: actions/github-script@v7
+        id: try_extract_model_from_labels
+        with:
+          result-encoding: string
+          script: |
+            const result = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue-number }}
+            });
+            const labels = result.data.labels;
+
+            if (labels.some(label => label.name.startsWith('aider-model-r1-free'))) {
+              return 'openrouter/deepseek/deepseek-r1:free';
+            }
+
+            const model = labels.find(label => label.name.startsWith('aider-model-'));
+            if (model) {
+              return model.name.split('ider-model-')[1];
+            }
+
+            return "${{ inputs.model }}";
+
+      - name: Try extract reasoning effort from labels
+        uses: actions/github-script@v7
+        id: try_extract_reasoning_effort_from_labels
+        with:
+          result-encoding: string
+          script: |
+            const result = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue-number }}
+            });
+            const labels = result.data.labels;
+
+            const reasoning_effort = labels.find(label => label.name.startsWith('reasoning-effort-'));
+            if (reasoning_effort) {
+              const value = reasoning_effort.name.split('easoning-effort-')[1];
+              return `--reasoning-effort ${value}`;
+            }
+
+            return "";
+
+      - name: Show extracted data
+        run: |
+          echo "prompt: ${{ steps.create_prompt.outputs.result }}"
+          echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
+          echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
+
+      - name: Apply changes with Aider
+        timeout-minutes: ${{ inputs.chat-timeout }}
+        env:
+          # API keys - Used implicitly by Aider
+          OPENAI_API_KEY: ${{ secrets.openai-api-key }}
+          OPENROUTER_API_KEY: ${{ secrets.openrouter-api-key }}
+          ANTHROPIC_API_KEY: ${{ secrets.anthropic-api-key }}
+          COHERE_API_KEY: ${{ secrets.cohere-api-key }}
+          GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
+          DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
+          GROQ_API_KEY: ${{ secrets.groq-api-key }}
+          
+        run: |
+          pip install aider-chat
+          
+          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
+
+      - name: Check for changes
+        id: changes
+        run: |
+          CHANGED=$(git diff --name-only -- . ':!.gitignore')
+          if [ -z "$CHANGED" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git add . ':!.gitignore'
+          git commit -m "feat: Closes issue #${{ inputs.issue-number }}"
+          git push --force-with-lease -u origin ${{ inputs.branch }}
+
+      - name: Upload input history
+        uses: actions/upload-artifact@v4
+        with:
+          name: aider-input-history
+          path: .aider.input.history
+
+      - name: Upload chat history
+        uses: actions/upload-artifact@v4
+        with:
+          name: aider-chat-history
+          path: .aider.chat.history.md
