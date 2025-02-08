@@ -147,6 +147,7 @@ jobs:
 
       - name: Show extracted data
         run: |
+          echo "prompt: ${{ steps.create_prompt.outputs.result }}"
           echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
           echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
 
