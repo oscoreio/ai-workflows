@@ -139,10 +139,11 @@ jobs:
 
             const reasoning_effort = labels.find(label => label.name.startsWith('reasoning-effort-'));
             if (reasoning_effort) {
-              return reasoning_effort.name.split('easoning-effort-')[1];
+              const value = reasoning_effort.name.split('easoning-effort-')[1];
+              return `--reasoning-effort ${value}`;
             }
 
-            return null;
+            return "";
 
       - name: Apply changes with Aider
         timeout-minutes: ${{ inputs.chat-timeout }}
@@ -156,11 +157,10 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
           GROQ_API_KEY: ${{ secrets.groq-api-key }}
           
-        # --reasoning-effort "${{ steps.try_extract_reasoning_effort_from_labels.outputs.result || 'medium' }}"
         run: |
           pip install aider-chat
           
-          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }}
+          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
       - name: Check for changes
         id: changes
