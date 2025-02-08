@@ -145,6 +145,11 @@ jobs:
 
             return "";
 
+      - name: Show extracted data
+        run: |
+          echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
+          echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
+
       - name: Apply changes with Aider
         timeout-minutes: ${{ inputs.chat-timeout }}
         env:
