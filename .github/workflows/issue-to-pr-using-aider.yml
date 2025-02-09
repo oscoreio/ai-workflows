@@ -119,7 +119,7 @@ jobs:
 
             const model = labels.find(label => label.name.startsWith('aider-model-'));
             if (model) {
-              return model.name.split('ider-model-')[1];
+              return model.name.split('ider-model-')[1].replace('-high', '');
             }
 
             return "${{ inputs.model }}";
@@ -136,6 +136,11 @@ jobs:
               issue_number: ${{ inputs.issue-number }}
             });
             const labels = result.data.labels;
+            
+            const model = labels.find(label => label.name.startsWith('aider-model-'));
+            if (model && model.name.endsWith('-high')) {
+              return "--reasoning-effort high";
+            }
 
             const reasoning_effort = labels.find(label => label.name.startsWith('reasoning-effort-'));
             if (reasoning_effort) {
