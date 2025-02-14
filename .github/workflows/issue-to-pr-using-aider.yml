@@ -97,14 +97,18 @@ jobs:
           # Find files and strip the './' prefix using sed
           file_list=$(find . -type f | sed 's|^\./||')
           issue_data=$(gh issue view ${{ inputs.issue-number }})
+    
+          # Create suitable files prompt; escape backticks to avoid unwanted command substitution
+          {
+            echo "Return suitable files for issue with these data:"
+            echo "$issue_data"
+            echo "------------------------------"
+            echo "List of all files in the repo:"
+            echo "$file_list"
+            echo "------------------------------"
+            echo "Returns answer in same format as in \`List of all files in the repo:\` block"
+          } > .aider.suitable-files.prompt.md
           
-          echo "Return suitable files for for issue with these data:" > .aider.suitable-files.prompt.md
-          echo "$issue_data" >> .aider.suitable-files.prompt.md
-          echo "------------------------------" >> .aider.suitable-files.prompt.md
-          echo "List of all files in the repo:" >> .aider.suitable-files.prompt.md
-          echo "$file_list" >> .aider.suitable-files.prompt.md
-          echo "------------------------------" >> .aider.suitable-files.prompt.md
-          echo "Returns answer in same format as in `List of all files in the repo:` block" >> .aider.suitable-files.prompt.md
           cat .aider.suitable-files.prompt.md
           
           suitable_files=$(langchain generate --input-file .aider.suitable-files.prompt.md)
@@ -112,14 +116,19 @@ jobs:
           echo "Suitable files:"
           echo "$suitable_files"
           
-          echo "Apply all necessary changes in one step (automated commit) based on the issue details:" > .aider.prompt.md
-          echo "```" >> .aider.prompt.md
-          echo "$issue_data" >> .aider.prompt.md
-          echo "```" >> .aider.prompt.md
-          echo "------------------------------" >> .aider.prompt.md
-          echo "List of suitable files in the repo:" >> .aider.prompt.md
-          echo "$suitable_files" >> .aider.prompt.md
-          echo "------------------------------" >> .aider.prompt.md
+          # Create full Aider prompt
+          {
+            echo "Apply all necessary changes in one step (automated commit) based on the issue details:"
+            echo ""
+            echo '```'
+            echo "$issue_data"
+            echo '```'
+            echo ""
+            echo "List of suitable files in the repo:"
+            echo '```'
+            echo "$suitable_files"
+            echo '```'
+          } > .aider.prompt.md
           
           echo "Aider Prompt:"
           cat .aider.prompt.md
