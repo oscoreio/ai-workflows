@@ -279,7 +279,9 @@ jobs:
           value=$(langchain generate --input-file .aider.pr-description.prompt.md)
           
           echo $value
-          echo "value=$value" >> $GITHUB_OUTPUT
+          echo "value<<EOF" >> $GITHUB_OUTPUT
+          echo "$value" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Push changes
         if: steps.changes.outputs.has_changes == 'true'
