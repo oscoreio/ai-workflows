@@ -290,7 +290,7 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true'
         run: |
           git add . ':!.gitignore'
-          git commit -m "feat: Closes issue #${{ inputs.issue-number }}"
+          git commit -m "${{ steps.pr.outputs.name }}"
           git push --force-with-lease -u origin ${{ steps.branch.outputs.branch_name }}
 
       - name: Wait for 15 seconds
@@ -317,10 +317,6 @@ jobs:
           echo "pr-name: ${{ steps.pr.outputs.name }}"
           echo "pr-name: ${{ steps.pr-description.outputs.value }}"
           echo "has_changes: ${{ steps.changes.outputs.has_changes }}"
-
-      - name: Show Aider prompt
-        if: always()
-        run: cat .aider.prompt.md
 
       - name: Show Aider chat history
         if: always()
