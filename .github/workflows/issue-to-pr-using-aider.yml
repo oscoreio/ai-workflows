@@ -93,7 +93,7 @@ jobs:
         id: list_files
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.personal-access-token || secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Find files and strip the './' prefix using sed
           file_list=$(find . -type f | sed 's|^\./||')
