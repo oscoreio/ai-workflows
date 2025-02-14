@@ -105,7 +105,9 @@ jobs:
             echo "$issue_data"
             echo '```'
             echo ""
-            echo "Returns answer in the format of a PR title: 'fix(#123): Fix the bug' or 'feat(#123): Add new feature'"
+            echo "Returns answer in the format of a PR title: 'fix(#123): Fix the bug' or 'feat(#123): Add new feature'."
+            echo "Do not incude any whitespaces on the start or end of the title."
+            echo "Do not incude any markdown formatting in the title."
           } > .aider.pr-name.prompt.md
           
           cat .aider.pr-name.prompt.md
