@@ -89,8 +89,7 @@ jobs:
           dotnet tool install --global langchain.cli --prerelease
           langchain auth openai ${{ secrets.openai-api-key }} --model latest-smart
 
-      - name: List of suitable files
-        id: list_files
+      - name: Create Aider prompt
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -109,38 +108,20 @@ jobs:
           cat prompt.txt
           
           suitable_files=$(langchain generate --input-file prompt.txt)
-          json_suitable_files=$(printf '%s' "$suitable_files" | jq -Rs .)
-    
-          echo "content=$json_suitable_files" >> $GITHUB_OUTPUT
           
           echo "Suitable files:"
           echo "$suitable_files"
-
-      - name: Create prompt
-        uses: actions/github-script@v7
-        id: create_prompt
-        with:
-          result-encoding: string
-          script: |
-            const result = await github.rest.issues.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: ${{ inputs.issue-number }}
-            });
-            const title = result.data.title ? result.data.title.replace(/"/g, "'").replace(/`/g, '\\`') : "No title";
-            const body = result.data.body ? result.data.body.replace(/"/g, "'").replace(/`/g, '\\`') : "No description";
-
-            // Parse the JSON-escaped suitable files from the previous step
-            const suitableFiles = JSON.parse('${{ steps.list_files.outputs.content }}');
-            
-            // Build the final prompt string
-            return `Apply all necessary changes in one step (automated commit) based on the issue details:
-            Issue title: ${title}
-            Issue description:
-              ${body}
-            List of files:
-              ${suitableFiles}`;
-
+          
+          echo "Apply all necessary changes in one step (automated commit) based on the issue details:" > .aider.prompt.md
+          echo "$issue_data" >> .aider.prompt.md
+          echo "------------------------------" >> .aider.prompt.md
+          echo "List of suitable files in the repo:" >> .aider.prompt.md
+          echo "$suitable_files" >> .aider.prompt.md
+          echo "------------------------------" >> .aider.prompt.md
+          
+          echo "Aider Prompt:"
+          cat .aider.prompt.md
+          
       - name: Try extract model from labels
         uses: actions/github-script@v7
         id: try_extract_model_from_labels
@@ -203,11 +184,9 @@ jobs:
 
       - name: Show extracted data
         run: |
-          echo "prompt: ${{ steps.create_prompt.outputs.result }}"
           echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
           echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
           echo "branch: ${{ steps.branch.outputs.branch_name }}"
-          echo "files: ${{ steps.list_files.outputs.content }}"
 
       - name: Apply changes with Aider
         timeout-minutes: ${{ inputs.chat-timeout }}
@@ -224,7 +203,7 @@ jobs:
         run: |
           pip install aider-chat
           
-          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
+          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message-file .aider.prompt.md --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
       - name: Check for changes
         id: changes
@@ -258,6 +237,12 @@ jobs:
           --title "${{ inputs.issue-number }}: @coderabbitai" \
           --body "Closes #${{ inputs.issue-number }}.
           @coderabbitai summary"
+
+      - name: Upload prompt
+        uses: actions/upload-artifact@v4
+        with:
+          name: aider-prompt
+          path: .aider.prompt.md
 
       - name: Upload input history
         uses: actions/upload-artifact@v4
