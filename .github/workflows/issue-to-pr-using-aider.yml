@@ -211,8 +211,11 @@ jobs:
         run: gh pr create
           -B ${{ inputs.default-branch }}
           -H ${{ steps.branch.outputs.branch_name }}
-          --title 'feat:@coderabbitai'
-          --body '@coderabbitai summary'
+          --title '${{ inputs.issue-number }}:\ @coderabbitai'
+          --body '
+            Closes #${{ inputs.issue-number }}.
+            @coderabbitai summary
+          '
 
       - name: Upload input history
         uses: actions/upload-artifact@v4
