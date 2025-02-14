@@ -87,7 +87,7 @@ jobs:
       - name: Install LangChain CLI
         run: |
           dotnet tool install --global langchain.cli --prerelease
-          langchain auth openai ${{ secrets.openai-api-key }} --model o3-mini
+          langchain auth openai ${{ secrets.openai-api-key }} --model latest-smart
 
       - name: List of suitable files
         id: list_files
