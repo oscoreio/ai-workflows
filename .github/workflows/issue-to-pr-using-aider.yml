@@ -15,7 +15,7 @@ on:
         description: "Model to use"
         required: false
         type: string
-        default: "gpt-4o"
+        default: "o3-mini"
       chat-timeout:
         description: "Timeout for chat in minutes to prevent burning your credits"
         required: false
