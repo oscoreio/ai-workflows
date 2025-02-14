@@ -89,6 +89,31 @@ jobs:
           dotnet tool install --global langchain.cli --prerelease
           langchain auth openai ${{ secrets.openai-api-key }} --model latest-smart
 
+      - name: Generate PR name
+        id: pr
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          issue_data=$(gh issue view ${{ inputs.issue-number }})
+          
+          # Create PR name generation prompt
+          {
+            echo "Return suitable name for a PR that closes issue with these data:"
+            echo ""
+            echo '```'
+            echo "$issue_data"
+            echo '```'
+            echo ""
+            echo "Returns answer in the format of a PR title: 'fix(#123): Fix the bug' or 'feat(#123): Add new feature'"
+          } > .aider.pr-name.prompt.md
+          
+          cat .aider.pr-name.prompt.md
+          
+          output=$(langchain generate --input-file .aider.pr-name.prompt.md)
+          
+          echo "name=$output" >> $GITHUB_OUTPUT
+
       - name: Create Aider prompt
         shell: bash
         env:
@@ -198,6 +223,7 @@ jobs:
           echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
           echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
           echo "branch: ${{ steps.branch.outputs.branch_name }}"
+          echo "pr-name: ${{ steps.pr.outputs.name }}"
 
       - name: Apply changes with Aider
         timeout-minutes: ${{ inputs.chat-timeout }}
@@ -245,9 +271,18 @@ jobs:
           gh pr create \
           -B ${{ inputs.default-branch }} \
           -H ${{ steps.branch.outputs.branch_name }} \
-          --title "${{ inputs.issue-number }}: @coderabbitai" \
+          --title "${{ steps.pr.outputs.name }}" \
           --body "Closes #${{ inputs.issue-number }}.
           @coderabbitai summary"
+        
+      - name: Show Aidar prompt
+        run: cat .aider.prompt.md
+
+      - name: Show Aidar input history
+        run: cat .aider.input.history
+
+      - name: Show Aidar chat history
+        run: cat .aider.chat.history.md
 
       - name: Upload prompt
         uses: actions/upload-artifact@v4
