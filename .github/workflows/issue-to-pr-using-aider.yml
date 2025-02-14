@@ -208,14 +208,13 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.personal-access-token || secrets.GITHUB_TOKEN }}
-        run: gh pr create
-          -B ${{ inputs.default-branch }}
-          -H ${{ steps.branch.outputs.branch_name }}
-          --title '${{ inputs.issue-number }}:\ @coderabbitai'
-          --body '
-            Closes #${{ inputs.issue-number }}.
-            @coderabbitai summary
-          '
+        run: |
+          gh pr create \
+          -B ${{ inputs.default-branch }} \
+          -H ${{ steps.branch.outputs.branch_name }} \
+          --title "${{ inputs.issue-number }}: @coderabbitai" \
+          --body "Closes #${{ inputs.issue-number }}.
+          @coderabbitai summary"
 
       - name: Upload input history
         uses: actions/upload-artifact@v4
