@@ -84,6 +84,14 @@ jobs:
           git checkout -b ${{ steps.branch.outputs.branch_name }} origin/${{ inputs.default-branch }}
           git rebase ${{ inputs.default-branch }}
 
+      - name: List files
+        id: list_files
+        run: |
+          file_list=$(find . -type f)
+          echo "content<<EOF" >> $GITHUB_OUTPUT
+          echo "$file_list"
+          EOF
+
       - name: Create prompt
         uses: actions/github-script@v7
         id: create_prompt
@@ -98,7 +106,7 @@ jobs:
             const title = result.data.title ? result.data.title.replace(/"/g, "'").replace(/`/g, '\\`') : "No title";
             const body = result.data.body ? result.data.body.replace(/"/g, "'").replace(/`/g, '\\`') : "No description";
 
-            return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below issue description. \nIssue title: ${title}\nIssue description:\n${body}`;
+            return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below issue description. \nIssue title: ${title}\nIssue description:\n${body}\nList of files:\n${{ steps.list_files.outputs.content }}`;
 
       - name: Try extract model from labels
         uses: actions/github-script@v7
