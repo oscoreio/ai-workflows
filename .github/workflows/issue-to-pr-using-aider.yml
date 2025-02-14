@@ -89,25 +89,18 @@ jobs:
           dotnet tool install --global langchain.cli --prerelease
           langchain auth openai ${{ secrets.openai-api-key }} --model o3-mini
 
-      - name: Extract issue data
-        id: extract_issue_data
-        shell: bash
-        run: |
-          data=$(gh issue view ${{ inputs.issue-number }})
-          
-          echo "content<<EOF" >> $GITHUB_OUTPUT
-          echo "$data" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: List of suitable files
         id: list_files
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.personal-access-token || secrets.GITHUB_TOKEN }}
         run: |
           # Find files and strip the './' prefix using sed
           file_list=$(find . -type f | sed 's|^\./||')
+          issue_data=$(gh issue view ${{ inputs.issue-number }})
           
           echo "Return suitable files for for issue with these data:" > prompt.txt
-          echo "${{ steps.extract_issue_data.outputs.content }}" >> prompt.txt
+          echo "$issue_data" >> prompt.txt
           cat prompt.txt
           
           suitable_files=$(langchain generate --input-file prompt.txt)
@@ -198,7 +191,6 @@ jobs:
           echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
           echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
           echo "branch: ${{ steps.branch.outputs.branch_name }}"
-          echo "issue-data: ${{ steps.extract_issue_data.outputs.content }}"
           echo "files: ${{ steps.list_files.outputs.content }}"
 
       - name: Apply changes with Aider
