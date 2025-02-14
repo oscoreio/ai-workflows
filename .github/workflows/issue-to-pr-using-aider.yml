@@ -87,7 +87,7 @@ jobs:
       - name: Install LangChain CLI
         run: |
           dotnet tool install --global langchain.cli --prerelease
-          langchain auth openai ${{ secrets.OPENAI_API_KEY }} --model o3-mini
+          langchain auth openai ${{ secrets.openai-api-key }} --model o3-mini
 
       - name: Extract issue data
         id: extract_issue_data
@@ -198,6 +198,7 @@ jobs:
           echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
           echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
           echo "branch: ${{ steps.branch.outputs.branch_name }}"
+          echo "issue-data: ${{ steps.extract_issue_data.outputs.content }}"
           echo "files: ${{ steps.list_files.outputs.content }}"
 
       - name: Apply changes with Aider
