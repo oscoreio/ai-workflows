@@ -260,7 +260,6 @@ jobs:
           issue_data=$(gh issue view ${{ inputs.issue-number }})
           chat_history=$(cat .aider.chat.history.md)
           
-          # Create PR description generation prompt
           {
             echo "Return suitable description/summary for a PR that closes issue with these data:"
             echo ""
@@ -277,12 +276,15 @@ jobs:
           
           cat .aider.pr-description.prompt.md
           
-          value=$(langchain generate --input-file .aider.pr-description.prompt.md)
+          pr_body=$(langchain generate --input-file .aider.pr-description.prompt.md)
           
-          echo $value
-          echo "value<<EOF" >> $GITHUB_OUTPUT
-          echo "$value" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo $pr_body
+          
+          {
+            echo "Closes #${{ inputs.issue-number }}"
+            echo ""
+            echo "$pr_body"
+          } > .aider.pr-description.md
 
       - name: Push changes
         if: steps.changes.outputs.has_changes == 'true'
@@ -304,8 +306,7 @@ jobs:
           -B ${{ inputs.default-branch }} \
           -H ${{ steps.branch.outputs.branch_name }} \
           --title "${{ steps.pr.outputs.name }}" \
-          --body "Closes #${{ inputs.issue-number }}.
-          ${{ steps.pr-description.outputs.value }}"
+          --body-file .aider.pr-description.md
 
       - name: Show extracted data
         if: always()
