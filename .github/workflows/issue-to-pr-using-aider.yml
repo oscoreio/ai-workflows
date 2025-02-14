@@ -113,7 +113,9 @@ jobs:
           echo "$suitable_files"
           
           echo "Apply all necessary changes in one step (automated commit) based on the issue details:" > .aider.prompt.md
+          echo "```" >> .aider.prompt.md
           echo "$issue_data" >> .aider.prompt.md
+          echo "```" >> .aider.prompt.md
           echo "------------------------------" >> .aider.prompt.md
           echo "List of suitable files in the repo:" >> .aider.prompt.md
           echo "$suitable_files" >> .aider.prompt.md
