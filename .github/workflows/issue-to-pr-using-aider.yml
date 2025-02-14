@@ -146,6 +146,9 @@ jobs:
           
           # Create full Aider prompt
           {
+            echo "You are a professional software developer and should produce the best possible code, preferably keeping it concise."
+            echo "Use English comments where necessary but only if it makes sense, don't be noisy."
+            echo ""
             echo "Apply all necessary changes in one step (automated commit) based on the issue details:"
             echo ""
             echo '```'
@@ -248,6 +251,36 @@ jobs:
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
 
+      - name: Generate PR description
+        id: pr-description
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          issue_data=$(gh issue view ${{ inputs.issue-number }})
+          chat_history=$(cat .aider.chat.history.md)
+          
+          # Create PR description generation prompt
+          {
+            echo "Return suitable description/summary for a PR that closes issue with these data:"
+            echo ""
+            echo '```'
+            echo "$issue_data"
+            echo '```'
+            echo ""
+            echo "Chat history of the Aider chat:"
+            echo '```'
+            echo "$chat_history"
+            echo '```'
+          } > .aider.pr-description.prompt.md
+          
+          cat .aider.pr-description.prompt.md
+          
+          value=$(langchain generate --input-file .aider.pr-description.prompt.md)
+          
+          echo $value
+          echo "value=$value" >> $GITHUB_OUTPUT
+
       - name: Push changes
         if: steps.changes.outputs.has_changes == 'true'
         run: |
@@ -269,7 +302,7 @@ jobs:
           -H ${{ steps.branch.outputs.branch_name }} \
           --title "${{ steps.pr.outputs.name }}" \
           --body "Closes #${{ inputs.issue-number }}.
-          @coderabbitai summary"
+          ${{ steps.pr-description.outputs.value }}"
 
       - name: Show extracted data
         if: always()
@@ -278,34 +311,13 @@ jobs:
           echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
           echo "branch: ${{ steps.branch.outputs.branch_name }}"
           echo "pr-name: ${{ steps.pr.outputs.name }}"
+          echo "pr-name: ${{ steps.pr-description.outputs.value }}"
           echo "has_changes: ${{ steps.changes.outputs.has_changes }}"
 
-      - name: Show Aidar prompt
+      - name: Show Aider prompt
         if: always()
         run: cat .aider.prompt.md
 
-      - name: Show Aidar input history
-        if: always()
-        run: cat .aider.input.history
-
-      - name: Show Aidar chat history
+      - name: Show Aider chat history
         if: always()
         run: cat .aider.chat.history.md
-
-      - name: Upload prompt
-        uses: actions/upload-artifact@v4
-        with:
-          name: aider-prompt
-          path: .aider.prompt.md
-
-      - name: Upload input history
-        uses: actions/upload-artifact@v4
-        with:
-          name: aider-input-history
-          path: .aider.input.history
-
-      - name: Upload chat history
-        uses: actions/upload-artifact@v4
-        with:
-          name: aider-chat-history
-          path: .aider.chat.history.md
