@@ -101,8 +101,11 @@ jobs:
           
           echo "Return suitable files for for issue with these data:" > prompt.txt
           echo "$issue_data" >> prompt.txt
+          echo "------------------------------" >> prompt.txt
           echo "List of all files in the repo:" >> prompt.txt
           echo "$file_list" >> prompt.txt
+          echo "------------------------------" >> prompt.txt
+          echo "Returns answer in same format as in `List of all files in the repo:` block" >> prompt.txt
           cat prompt.txt
           
           suitable_files=$(langchain generate --input-file prompt.txt)
@@ -132,11 +135,11 @@ jobs:
             
             // Build the final prompt string
             return `Apply all necessary changes in one step (automated commit) based on the issue details:
-          Issue title: ${title}
-          Issue description:
-            ${body}
-          List of files:
-            ${suitableFiles}`;
+            Issue title: ${title}
+            Issue description:
+              ${body}
+            List of files:
+              ${suitableFiles}`;
 
       - name: Try extract model from labels
         uses: actions/github-script@v7
