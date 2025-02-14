@@ -271,7 +271,7 @@ jobs:
             echo '```'
             echo "$chat_history"
             echo '```'
-            echo "It will be used as a PR description and passed to 'gh pr create' command. Please wrap any \` symbols in the output using \\."
+            echo "It will be used as a PR description using markdown format."
           } > .aider.pr-description.prompt.md
           
           cat .aider.pr-description.prompt.md
