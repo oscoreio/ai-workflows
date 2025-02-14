@@ -110,9 +110,10 @@ jobs:
           
           cat .aider.pr-name.prompt.md
           
-          output=$(langchain generate --input-file .aider.pr-name.prompt.md)
+          name=$(langchain generate --input-file .aider.pr-name.prompt.md)
           
-          echo "name=$output" >> $GITHUB_OUTPUT
+          echo $name
+          echo "name=$name" >> $GITHUB_OUTPUT
 
       - name: Create Aider prompt
         shell: bash
@@ -218,13 +219,6 @@ jobs:
 
             return "";
 
-      - name: Show extracted data
-        run: |
-          echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
-          echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
-          echo "branch: ${{ steps.branch.outputs.branch_name }}"
-          echo "pr-name: ${{ steps.pr.outputs.name }}"
-
       - name: Apply changes with Aider
         timeout-minutes: ${{ inputs.chat-timeout }}
         env:
@@ -274,14 +268,26 @@ jobs:
           --title "${{ steps.pr.outputs.name }}" \
           --body "Closes #${{ inputs.issue-number }}.
           @coderabbitai summary"
-        
+
+      - name: Show extracted data
+        if: always()
+        run: |
+          echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
+          echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
+          echo "branch: ${{ steps.branch.outputs.branch_name }}"
+          echo "pr-name: ${{ steps.pr.outputs.name }}"
+          echo "has_changes: ${{ steps.changes.outputs.has_changes }}"
+
       - name: Show Aidar prompt
+        if: always()
         run: cat .aider.prompt.md
 
       - name: Show Aidar input history
+        if: always()
         run: cat .aider.input.history
 
       - name: Show Aidar chat history
+        if: always()
         run: cat .aider.chat.history.md
 
       - name: Upload prompt
