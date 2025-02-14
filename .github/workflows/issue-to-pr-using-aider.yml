@@ -86,11 +86,15 @@ jobs:
 
       - name: List files
         id: list_files
+        shell: bash
         run: |
-          file_list=$(find . -type f)
+          # Find files and strip the './' prefix using sed
+          file_list=$(find . -type f | sed 's|^\./||')
+          
+          # Write the output to GitHub's output file
           echo "content<<EOF" >> $GITHUB_OUTPUT
-          echo "$file_list"
-          EOF
+          echo "$file_list" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create prompt
         uses: actions/github-script@v7
