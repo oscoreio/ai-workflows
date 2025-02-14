@@ -173,6 +173,8 @@ jobs:
           echo "prompt: ${{ steps.create_prompt.outputs.result }}"
           echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
           echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
+          echo "branch: ${{ steps.branch.outputs.branch_name }}"
+          echo "files: ${{ steps.list_files.outputs.content }}"
 
       - name: Apply changes with Aider
         timeout-minutes: ${{ inputs.chat-timeout }}
