@@ -346,6 +346,7 @@ jobs:
           fi
 
       - name: Generate PR description
+        if: steps.changes.outputs.has_changes == 'true'
         id: pr-description
         shell: bash
         env:
