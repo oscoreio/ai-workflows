@@ -146,8 +146,33 @@ jobs:
           
           suitable_files=$(langchain generate --input-file .aider.suitable-files.prompt.md)
           
-          echo "Suitable files:"
-          echo "$suitable_files"
+          # Create suitable files with dependecies prompt; escape backticks to avoid unwanted command substitution
+          {
+            echo "Return suitable files and their first-level dependencies files for issue with these data:"
+            echo "$issue_data"
+            echo "------------------------------"
+            echo "List of all files in the repo:"
+            echo "$file_list"
+            echo "------------------------------"
+            echo "Returns answer in same format as in \`List of all files in the repo:\` block"
+          } > .aider.suitable-files-with-deps.prompt.md
+          
+          # Write all content of suitable files to .aider.suitable-files-with-deps.prompt.md
+          for file in $suitable_files; do
+            echo "Suitable file: $file"
+            echo "" >> .aider.suitable-files-with-deps.prompt.md
+            echo "$file" >> .aider.suitable-files-with-deps.prompt.md
+            echo "------------------------------" >> .aider.suitable-files-with-deps.prompt.md
+            cat $file >> .aider.suitable-files-with-deps.prompt.md
+            echo "------------------------------" >> .aider.suitable-files-with-deps.prompt.md
+          done
+          
+          cat .aider.suitable-files-with-deps.prompt.md
+          
+          suitable_files-with-deps=$(langchain generate --input-file .aider.suitable-files-with-deps.prompt.md)
+          
+          echo "Suitable files with dependencies:"
+          echo "$suitable_files-with-deps"
           
           # Create full Aider prompt
           {
@@ -162,7 +187,7 @@ jobs:
             echo ""
             echo "List of suitable files in the repo:"
             echo '```'
-            echo "$suitable_files"
+            echo "$suitable_files-with-deps"
             echo '```'
           } > .aider.prompt.md
           
