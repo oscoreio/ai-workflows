@@ -75,6 +75,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install dependencies in the background
+        run: nohup npm install > /dev/null 2>&1 &
+
       - name: Setup Git user
         run: |
           git config --local user.email "${{ secrets.user-email || 'bot@aider.com' }}"
