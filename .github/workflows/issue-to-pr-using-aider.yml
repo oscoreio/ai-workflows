@@ -284,6 +284,12 @@ jobs:
             echo "\`\`\`"
             cat .aider.test_output.txt
             echo "\`\`\`"
+            echo ""
+            echo "Original Aider prompt:"
+            echo ""
+            cat .aider.prompt.md
+            echo ""
+            echo "Please fix the code based on the test output and the original Aider prompt."
           } > .aider.test-results.md
           
           echo "Aider Prompt:"
