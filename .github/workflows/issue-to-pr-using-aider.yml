@@ -159,12 +159,18 @@ jobs:
           
           # Write all content of suitable files to .aider.suitable-files-with-deps.prompt.md
           for file in $suitable_files; do
-            echo "Suitable file: $file"
-            echo "" >> .aider.suitable-files-with-deps.prompt.md
-            echo "$file" >> .aider.suitable-files-with-deps.prompt.md
-            echo "------------------------------" >> .aider.suitable-files-with-deps.prompt.md
-            cat $file >> .aider.suitable-files-with-deps.prompt.md
-            echo "------------------------------" >> .aider.suitable-files-with-deps.prompt.md
+            # Check if the file exists
+            if [ -f "$file" ]; then
+              echo "Suitable file: $file"
+
+              {
+                echo ""
+                echo "$file"
+                echo "------------------------------"
+                cat $file
+                echo "------------------------------"
+              } >> .aider.suitable-files-with-deps.prompt.md
+            fi
           done
           
           cat .aider.suitable-files-with-deps.prompt.md
