@@ -260,7 +260,11 @@ jobs:
         continue-on-error: true
         run: |
           echo "Running tests with command: ${{ inputs.test-command }}"
-          ${{ inputs.test-command }} > test_output.txt 2>&1
+          ${{ inputs.test-command }} > .aider.test_output.txt 2>&1
+          
+          echo "Output:"
+          cat .aider.test_output.txt
+          
           echo "test_exit_code=$?" >> $GITHUB_OUTPUT
 
       - name: Process test results with Aider
@@ -278,9 +282,12 @@ jobs:
             echo "Test command \`${{ inputs.test-command }}\` failed with exit code ${{ steps.run-tests.outputs.test_exit_code }}. Please fix the code based on the test output:"
             echo ""
             echo "\`\`\`"
-            cat test_output.txt
+            cat .aider.test_output.txt
             echo "\`\`\`"
           } > .aider.test-results.md
+          
+          echo "Aider Prompt:"
+          cat .aider.test-results.md
           
           aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message-file .aider.test-results.md --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
