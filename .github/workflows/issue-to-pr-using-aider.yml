@@ -292,6 +292,9 @@ jobs:
           
           aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message-file .aider.prompt.md --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
+      - name: Run next lint --fix
+        run: npx next lint --fix
+
       - name: Run tests
         if: inputs.test-command != ''
         id: run-tests
@@ -335,6 +338,10 @@ jobs:
           
           aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message-file .aider.test-results.md --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
+      - name: Run next lint --fix
+        if: inputs.test-command != '' && steps.run-tests.outcome == 'failure'
+        run: npx next lint --fix
+  
       - name: Check for changes
         id: changes
         run: |
