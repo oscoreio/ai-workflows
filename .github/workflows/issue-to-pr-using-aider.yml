@@ -6,6 +6,11 @@ on:
         description: "Issue number"
         required: true
         type: number
+      test-command:
+        description: "Command to run tests after changes"
+        required: false
+        type: string
+        default: ""
       default-branch:
         description: "Default branch name"
         required: false
@@ -248,6 +253,36 @@ jobs:
           pip install aider-chat
           
           aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message-file .aider.prompt.md --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
+
+      - name: Run tests
+        if: inputs.test-command != ''
+        id: run-tests
+        continue-on-error: true
+        run: |
+          echo "Running tests with command: ${{ inputs.test-command }}"
+          ${{ inputs.test-command }} > test_output.txt 2>&1
+          echo "test_exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Process test results with Aider
+        if: inputs.test-command != '' && steps.run-tests.outcome == 'failure'
+        env:
+          OPENAI_API_KEY: ${{ secrets.openai-api-key }}
+          OPENROUTER_API_KEY: ${{ secrets.openrouter-api-key }}
+          ANTHROPIC_API_KEY: ${{ secrets.anthropic-api-key }}
+          COHERE_API_KEY: ${{ secrets.cohere-api-key }}
+          GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
+          DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
+          GROQ_API_KEY: ${{ secrets.groq-api-key }}
+        run: |
+          {
+            echo "Test command \`${{ inputs.test-command }}\` failed with exit code ${{ steps.run-tests.outputs.test_exit_code }}. Please fix the code based on the test output:"
+            echo ""
+            echo "\`\`\`"
+            cat test_output.txt
+            echo "\`\`\`"
+          } > .aider.test-results.md
+          
+          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message-file .aider.test-results.md --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
       - name: Check for changes
         id: changes
