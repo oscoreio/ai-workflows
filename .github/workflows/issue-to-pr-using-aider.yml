@@ -110,7 +110,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          issue_data=$(gh issue view ${{ inputs.issue-number }})
+          issue_data=$(gh issue view ${{ inputs.issue-number }} --comments)
           
           # Create PR name generation prompt
           {
