@@ -6,6 +6,16 @@ on:
         description: "Issue number"
         required: true
         type: number
+      install-command:
+        description: "Command to run to install dependencies"
+        required: false
+        type: string
+        default: ""
+      autofix-command:
+        description: "Command to run to autofix code"
+        required: false
+        type: string
+        default: ""
       test-command:
         description: "Command to run tests after changes"
         required: false
@@ -74,10 +84,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      # TODO: Install dependencies in the background
-      # - name: Install dependencies in the background
-      #   run: nohup npm install > /dev/null 2>&1 &
 
       - name: Setup Git user
         run: |
@@ -268,6 +274,10 @@ jobs:
 
             return "";
 
+      - name: Install dependencies in the background
+        if: inputs.install-command != ''
+        run: nohup ${{ inputs.install-command }} > /dev/null 2>&1 &
+
       - name: Cache pip packages
         uses: actions/cache@v3
         with:
@@ -293,8 +303,19 @@ jobs:
           
           aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message-file .aider.prompt.md --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install dependencies
+        if: inputs.install-command != ''
+        run: ${{ inputs.install-command }}
+
       - name: Run next lint --fix
         run: npx next lint --fix
+
+      - name: Run autofix command
+        if: inputs.autofix-command != ''
+        run: ${{ inputs.autofix-command }}
 
       - name: Run tests
         if: inputs.test-command != ''
