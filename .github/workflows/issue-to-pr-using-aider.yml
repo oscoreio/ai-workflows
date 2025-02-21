@@ -311,10 +311,12 @@ jobs:
         run: ${{ inputs.install-command }}
 
       - name: Run next lint --fix
+        continue-on-error: true
         run: npx next lint --fix
 
       - name: Run autofix command
         if: inputs.autofix-command != ''
+        continue-on-error: true
         run: ${{ inputs.autofix-command }}
 
       - name: Run tests
@@ -362,6 +364,7 @@ jobs:
 
       - name: Run next lint --fix
         if: inputs.test-command != '' && steps.run-tests.outcome == 'failure'
+        continue-on-error: true
         run: npx next lint --fix
   
       - name: Check for changes
