@@ -110,7 +110,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          issue_data=$(gh issue view ${{ inputs.issue-number }} --comments)
+          issue_data=$(gh issue view ${{ inputs.issue-number }})
+          issue_comments=$(gh issue view ${{ inputs.issue-number }} --comments)
           
           # Create PR name generation prompt
           {
@@ -118,6 +119,7 @@ jobs:
             echo ""
             echo '```'
             echo "$issue_data"
+            echo "$issue_comments"
             echo '```'
             echo ""
             echo "Returns answer in the format of a PR title: 'fix(#123): Fix the bug' or 'feat(#123): Add new feature'."
@@ -140,11 +142,13 @@ jobs:
           # Find files and strip the './' prefix using sed
           file_list=$(find . -type f | sed 's|^\./||')
           issue_data=$(gh issue view ${{ inputs.issue-number }})
+          issue_comments=$(gh issue view ${{ inputs.issue-number }} --comments)
     
           # Create suitable files prompt; escape backticks to avoid unwanted command substitution
           {
             echo "Return suitable files for issue with these data (not more than 10 files):"
             echo "$issue_data"
+            echo "$issue_comments"
             echo "------------------------------"
             echo "List of all files in the repo:"
             echo "$file_list"
@@ -160,6 +164,7 @@ jobs:
           {
             echo "Return suitable files and their first-level dependencies files (not more than 15 files) for issue with these data:"
             echo "$issue_data"
+            echo "$issue_comments"
             echo "------------------------------"
             echo "List of all files in the repo:"
             echo "$file_list"
@@ -203,6 +208,7 @@ jobs:
             echo ""
             echo '```'
             echo "$issue_data"
+            echo "$issue_comments"
             echo '```'
             echo ""
             echo "List of suitable files in the repo:"
@@ -378,6 +384,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           issue_data=$(gh issue view ${{ inputs.issue-number }})
+          issue_comments=$(gh issue view ${{ inputs.issue-number }} --comments)
           chat_history=$(cat .aider.chat.history.md)
           
           {
@@ -385,6 +392,7 @@ jobs:
             echo ""
             echo '```'
             echo "$issue_data"
+            echo "$issue_comments"
             echo '```'
             echo ""
             echo "Chat history of the Aider chat:"
