@@ -80,6 +80,25 @@ jobs:
               comment_id: ${{ inputs.comment-id }}
             });
             
+            // Check if "completed" reaction exists and delete it
+            const reactions = await github.rest.reactions.listForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ inputs.comment-id }}
+            });
+            
+            for (const reaction of reactions.data) {
+              if (reaction.content === 'rocket') {
+                // Delete completed reaction
+                await github.rest.reactions.deleteForIssueComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: ${{ inputs.comment-id }},
+                  reaction_id: reaction.id
+                });
+              }
+            }
+            
             // Add "eyes" reaction to the comment
             await github.rest.reactions.createForIssueComment({
               owner: context.repo.owner,
@@ -268,3 +287,16 @@ jobs:
         with:
           name: aider-chat-history
           path: .aider.chat.history.md
+
+      - name: Add completed reaction
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Add "completed" reaction (rocket) to the comment
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ inputs.comment-id }},
+              content: 'rocket'
+            });
