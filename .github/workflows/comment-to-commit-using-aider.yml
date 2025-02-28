@@ -61,7 +61,6 @@ jobs:
         uses: actions/github-script@v7
         id: extract_info
         with:
-          result-encoding: string
           script: |
             // Extract PR number from PR URL
             const prUrl = "${{ inputs.pr-url }}";
@@ -115,17 +114,16 @@ jobs:
               console.log(`Found linked issue: #${issueNumber}`);
             }
             
-            return {
-              pr_number: prNumber,
-              issue_number: issueNumber, 
-              branch: prData.data.head.ref,
-              comment_body: commentData.data.body
-            };
+            // Set individual outputs instead of a complex JSON object
+            core.setOutput("pr_number", prNumber);
+            core.setOutput("issue_number", issueNumber);
+            core.setOutput("branch", prData.data.head.ref);
+            core.setOutput("comment_body", commentData.data.body);
 
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ fromJSON(steps.extract_info.outputs.result).branch }}
+          ref: ${{ steps.extract_info.outputs.branch }}
 
       - name: Setup Git user
         run: |
@@ -138,7 +136,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const commentBody = JSON.parse('${{ steps.extract_info.outputs.result }}').comment_body;
+            const commentBody = "${{ steps.extract_info.outputs.comment_body }}";
             // Remove '@aider' from the comment
             const prompt = commentBody.replace(/@aider/g, '').trim();
             return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below issue description. \Comment body: ${prompt}`;
@@ -149,7 +147,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const issueNumber = JSON.parse('${{ steps.extract_info.outputs.result }}').issue_number;
+            const issueNumber = ${{ steps.extract_info.outputs.issue_number }};
             const result = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -174,7 +172,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const issueNumber = JSON.parse('${{ steps.extract_info.outputs.result }}').issue_number;
+            const issueNumber = ${{ steps.extract_info.outputs.issue_number }};
             const result = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -192,6 +190,9 @@ jobs:
 
       - name: Show extracted data
         run: |
+          echo "PR Number: ${{ steps.extract_info.outputs.pr_number }}"
+          echo "Issue Number: ${{ steps.extract_info.outputs.issue_number }}"
+          echo "Branch: ${{ steps.extract_info.outputs.branch }}"
           echo "prompt: ${{ steps.create_prompt.outputs.result }}"
           echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
           echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
@@ -227,8 +228,8 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true'
         run: |
           git add . ':!.gitignore'
-          git commit -m "feat: Closes #${{ fromJSON(steps.extract_info.outputs.result).issue_number }}"
-          git push --force-with-lease -u origin ${{ fromJSON(steps.extract_info.outputs.result).branch }}
+          git commit -m "feat: Closes #${{ steps.extract_info.outputs.issue_number }}"
+          git push --force-with-lease -u origin ${{ steps.extract_info.outputs.branch }}
 
       - name: Upload input history
         uses: actions/upload-artifact@v4
