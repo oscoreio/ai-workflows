@@ -125,7 +125,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ fromJson(steps.extract_info.outputs.result).branch }}
+          ref: ${{ fromJSON(steps.extract_info.outputs.result).branch }}
 
       - name: Setup Git user
         run: |
