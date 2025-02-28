@@ -10,6 +10,14 @@ on:
         description: "Branch name"
         required: true
         type: string
+      comment-id:
+        description: "ID of the comment that triggered the workflow"
+        required: true
+        type: number
+      pr-url:
+        description: "URL of the pull request"
+        required: true
+        type: string
       issue-number:
         description: "Issue number"
         required: true
