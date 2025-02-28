@@ -90,6 +90,11 @@ jobs:
           git config --local user.email "${{ secrets.user-email || 'bot@aider.com' }}"
           git config --local user.name "${{ secrets.user-name || 'github-actions[bot]' }}"
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
       - name: Generate branch name
         id: branch
         run: echo "branch_name=aider/issue-${{ inputs.issue-number }}_$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
