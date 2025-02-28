@@ -51,7 +51,7 @@ on:
 jobs:
   create-commit:
     permissions:
-      issues: read
+      issues: write
       pull-requests: write
       contents: write
       
@@ -78,6 +78,14 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               comment_id: ${{ inputs.comment-id }}
+            });
+            
+            // Add "eyes" reaction to the comment
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ inputs.comment-id }},
+              content: 'eyes'
             });
             
             // Try to find related issue number from PR title or body
