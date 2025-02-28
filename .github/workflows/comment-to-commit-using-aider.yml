@@ -152,6 +152,16 @@ jobs:
         with:
           ref: ${{ steps.extract_info.outputs.branch }}
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Install LangChain CLI
+        run: |
+          dotnet tool install --global langchain.cli --prerelease
+          langchain auth openai ${{ secrets.openai-api-key }} --model latest-smart
+
       - name: Setup Git user
         run: |
           git config --local user.email "bot@aider.com"
@@ -293,24 +303,14 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Read the aider chat history file
-            const fs = require('fs');
+            // Summarize the aider chat history file
             let chatContent = '';
+            const { execSync } = require('child_process');
             try {
-              if (fs.existsSync('.aider.chat.history.md')) {
-                chatContent = fs.readFileSync('.aider.chat.history.md', 'utf8');
-                
-                // Limit content length if it's too large for a GitHub comment
-                const maxLength = 65000; // GitHub comment length limit is around 65536
-                if (chatContent.length > maxLength) {
-                  chatContent = chatContent.substring(chatContent.length - maxLength) + 
-                    '\n\n*Note: Output was truncated due to length limitations.*';
-                }
-              } else {
-                chatContent = 'No Aider chat history found.';
-              }
+              chatContent = execSync('langchain summarize --input-file .aider.chat.history.md --word-count 100', { encoding: 'utf-8' });
+              console.log('CLI Output:', output);
             } catch (error) {
-              chatContent = `Error reading Aider output: ${error.message}`;
+              console.error('Error running CLI tool:', error);
             }
             
             // Create a new comment with the aider output
