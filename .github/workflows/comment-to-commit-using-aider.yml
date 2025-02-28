@@ -236,7 +236,7 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true'
         run: |
           git add . ':!.gitignore'
-          git commit -m "feat: Closes #${{ steps.extract_info.outputs.issue_number }}"
+          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --commit
           git push --force-with-lease -u origin ${{ steps.extract_info.outputs.branch }}
 
       - name: Upload input history
