@@ -14,17 +14,22 @@ AI will generate a PR within a minute for your review, saving you time on coding
 name: Issue to PR using Aider
 on:
   issues:
-    types: [labeled]
+    types: [opened, labeled]
 
 jobs:
   generate:
+    # Run the job if:
+    # - The event is "labeled" and the label name starts with "aider", OR
+    # - The event is "opened" and one of the issue's labels contains "aider"
+    if: >
+      (github.event.action == 'labeled' && startsWith(github.event.label.name, 'aider'))
+      ||
+      (github.event.action == 'opened' && contains(join(github.event.issue.labels.*.name, ' '), 'aider'))
     uses: oscoreio/ai-workflows/.github/workflows/issue-to-pr-using-aider.yml@main
-    if: startsWith(github.event.label.name, 'aider')
     with:
       issue-number: ${{ github.event.issue.number }}
-    secrets: 
+    secrets:
       openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-
 ```
 
 ### Disclaimer
