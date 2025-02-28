@@ -138,7 +138,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const commentBody = fromJson('${{ steps.extract_info.outputs.result }}').comment_body;
+            const commentBody = JSON.parse('${{ steps.extract_info.outputs.result }}').comment_body;
             // Remove '@aider' from the comment
             const prompt = commentBody.replace(/@aider/g, '').trim();
             return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below issue description. \Comment body: ${prompt}`;
@@ -149,7 +149,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const issueNumber = fromJson('${{ steps.extract_info.outputs.result }}').issue_number;
+            const issueNumber = JSON.parse('${{ steps.extract_info.outputs.result }}').issue_number;
             const result = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -174,7 +174,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const issueNumber = fromJson('${{ steps.extract_info.outputs.result }}').issue_number;
+            const issueNumber = JSON.parse('${{ steps.extract_info.outputs.result }}').issue_number;
             const result = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -227,8 +227,8 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true'
         run: |
           git add . ':!.gitignore'
-          git commit -m "feat: Closes #${{ fromJson(steps.extract_info.outputs.result).issue_number }}"
-          git push --force-with-lease -u origin ${{ fromJson(steps.extract_info.outputs.result).branch }}
+          git commit -m "feat: Closes #${{ fromJSON(steps.extract_info.outputs.result).issue_number }}"
+          git push --force-with-lease -u origin ${{ fromJSON(steps.extract_info.outputs.result).branch }}
 
       - name: Upload input history
         uses: actions/upload-artifact@v4
