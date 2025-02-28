@@ -242,9 +242,19 @@ jobs:
 
       - name: Push changes
         if: steps.changes.outputs.has_changes == 'true'
+        timeout-minutes: ${{ inputs.chat-timeout }}
+        env:
+          # API keys - Used implicitly by Aider
+          OPENAI_API_KEY: ${{ secrets.openai-api-key }}
+          OPENROUTER_API_KEY: ${{ secrets.openrouter-api-key }}
+          ANTHROPIC_API_KEY: ${{ secrets.anthropic-api-key }}
+          COHERE_API_KEY: ${{ secrets.cohere-api-key }}
+          GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
+          DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
+          GROQ_API_KEY: ${{ secrets.groq-api-key }}
         run: |
           git add . ':!.gitignore'
-          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --commit
+          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --commit --yes-always --watch-files --skip-sanity-check-repo
           git push --force-with-lease -u origin ${{ steps.extract_info.outputs.branch }}
 
       - name: Upload input history
