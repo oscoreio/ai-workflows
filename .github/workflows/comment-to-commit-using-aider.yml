@@ -220,7 +220,7 @@ jobs:
         run: |
           pip install aider-chat
           
-          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --watch-files --yes-always --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
+          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --watch-files --skip-sanity-check-repo --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
       - name: Check for changes
         id: changes
