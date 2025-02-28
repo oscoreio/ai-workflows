@@ -109,36 +109,6 @@ jobs:
           dotnet tool install --global langchain.cli --prerelease
           langchain auth openai ${{ secrets.openai-api-key }} --model latest-smart
 
-      - name: Generate PR name
-        id: pr
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          issue_data=$(gh issue view ${{ inputs.issue-number }})
-          issue_comments=$(gh issue view ${{ inputs.issue-number }} --comments)
-          
-          # Create PR name generation prompt
-          {
-            echo "Return suitable name for a PR that closes issue with these data:"
-            echo ""
-            echo '```'
-            echo "$issue_data"
-            echo "$issue_comments"
-            echo '```'
-            echo ""
-            echo "Returns answer in the format of a PR title: 'fix(#123): Fix the bug' or 'feat(#123): Add new feature'."
-            echo "Do not incude any whitespaces on the start or end of the title."
-            echo "Do not incude any markdown formatting in the title."
-          } > .aider.pr-name.prompt.md
-          
-          cat .aider.pr-name.prompt.md
-          
-          name=$(langchain generate --input-file .aider.pr-name.prompt.md)
-          
-          echo $name
-          echo "name=$name" >> $GITHUB_OUTPUT
-
       - name: Create Aider prompt
         shell: bash
         env:
@@ -380,6 +350,41 @@ jobs:
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
+
+      - name: Generate PR name
+        id: pr
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          issue_data=$(gh issue view ${{ inputs.issue-number }})
+          issue_comments=$(gh issue view ${{ inputs.issue-number }} --comments)
+          chat_history=$(cat .aider.chat.history.md)
+          
+          # Create PR name generation prompt
+          {
+            echo "Return suitable name for a PR that closes issue with these data:"
+            echo ""
+            echo '```'
+            echo "$issue_data"
+            echo "$issue_comments"
+            echo '```'
+            echo ""
+            echo "Chat history of the Aider chat:"
+            echo '```'
+            echo "$chat_history"
+            echo '```'
+            echo "Returns answer in the format of a PR title: 'fix(#123): Fix the bug' or 'feat(#123): Add new feature'."
+            echo "Do not incude any whitespaces on the start or end of the title."
+            echo "Do not incude any markdown formatting in the title."
+          } > .aider.pr-name.prompt.md
+          
+          cat .aider.pr-name.prompt.md
+          
+          name=$(langchain generate --input-file .aider.pr-name.prompt.md)
+          
+          echo $name
+          echo "name=$name" >> $GITHUB_OUTPUT
 
       - name: Generate PR description
         if: steps.changes.outputs.has_changes == 'true'
