@@ -288,6 +288,39 @@ jobs:
           name: aider-chat-history
           path: .aider.chat.history.md
 
+      - name: Create comment with Aider output
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Read the aider chat history file
+            const fs = require('fs');
+            let chatContent = '';
+            try {
+              if (fs.existsSync('.aider.chat.history.md')) {
+                chatContent = fs.readFileSync('.aider.chat.history.md', 'utf8');
+                
+                // Limit content length if it's too large for a GitHub comment
+                const maxLength = 65000; // GitHub comment length limit is around 65536
+                if (chatContent.length > maxLength) {
+                  chatContent = chatContent.substring(chatContent.length - maxLength) + 
+                    '\n\n*Note: Output was truncated due to length limitations.*';
+                }
+              } else {
+                chatContent = 'No Aider chat history found.';
+              }
+            } catch (error) {
+              chatContent = `Error reading Aider output: ${error.message}`;
+            }
+            
+            // Create a new comment with the aider output
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ steps.extract_info.outputs.pr_number }},
+              body: `## Aider Output\n\n${chatContent}`
+            });
+
       - name: Add completed reaction
         if: always()
         uses: actions/github-script@v7
