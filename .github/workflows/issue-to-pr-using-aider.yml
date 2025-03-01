@@ -244,14 +244,9 @@ jobs:
               return 'openrouter/deepseek/deepseek-r1:free';
             }
 
-            const model = labels.find(label => label.name.startsWith('aider-model-'));
+            const model = labels.find(label => label.name.startsWith('aider-'));
             if (model) {
-              return model.name.split('ider-model-')[1].replace('-high', '');
-            }
-
-            const model2 = labels.find(label => label.name.startsWith('aider-'));
-            if (model2) {
-              return model2.name.split('ider-')[1].replace('-high', '');
+              return model.name.split('ider-')[1].replace('-high', '');
             }
 
             return "${{ inputs.model }}";
@@ -269,20 +264,9 @@ jobs:
             });
             const labels = result.data.labels;
             
-            const model = labels.find(label => label.name.startsWith('aider-model-'));
+            const model = labels.find(label => label.name.startsWith('aider-'));
             if (model && model.name.endsWith('-high')) {
               return "--reasoning-effort high";
-            }
-            
-            const model2 = labels.find(label => label.name.startsWith('aider-'));
-            if (model2 && model2.name.endsWith('-high')) {
-              return "--reasoning-effort high";
-            }
-
-            const reasoning_effort = labels.find(label => label.name.startsWith('reasoning-effort-'));
-            if (reasoning_effort) {
-              const value = reasoning_effort.name.split('easoning-effort-')[1];
-              return `--reasoning-effort ${value}`;
             }
 
             return "";

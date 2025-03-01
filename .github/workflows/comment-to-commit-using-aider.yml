@@ -184,11 +184,10 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const issueNumber = ${{ steps.extract_info.outputs.issue_number }};
             const result = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: issueNumber
+              issue_number: ${{ steps.extract_info.outputs.issue_number }}
             });
             const labels = result.data.labels;
 
@@ -196,9 +195,9 @@ jobs:
               return 'openrouter/deepseek/deepseek-r1:free';
             }
 
-            const model = labels.find(label => label.name.startsWith('aider-model-'));
+            const model = labels.find(label => label.name.startsWith('aider-'));
             if (model) {
-              return model.name.split('ider-model-')[1];
+              return model.name.split('ider-')[1].replace('-high', '');
             }
 
             return "${{ inputs.model }}";
@@ -209,21 +208,20 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const issueNumber = ${{ steps.extract_info.outputs.issue_number }};
             const result = await github.rest.issues.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: issueNumber
+              issue_number: ${{ steps.extract_info.outputs.issue_number }}
             });
             const labels = result.data.labels;
-
-            const reasoning_effort = labels.find(label => label.name.startsWith('reasoning-effort-'));
-            if (reasoning_effort) {
-              const value = reasoning_effort.name.split('easoning-effort-')[1];
-              return `--reasoning-effort ${value}`;
+            
+            const model = labels.find(label => label.name.startsWith('aider-'));
+            if (model && model.name.endsWith('-high')) {
+              return "--reasoning-effort high";
             }
 
             return "";
+
 
       - name: Show extracted data
         run: |
