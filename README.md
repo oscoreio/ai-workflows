@@ -26,6 +26,9 @@ jobs:
     uses: oscoreio/ai-workflows/.github/workflows/issue-to-pr-using-aider.yml@main
     with:
       issue-number: ${{ github.event.issue.number }}
+      # install-command: 'npm install'
+      # autofix-command: 'npm run lint:fix'
+      # test-command: 'npm build'
     secrets:
       # You need set one of these keys
       openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }} # while it allows to use DeepSeek R1 for free, it still required to rate-limiting you
@@ -59,6 +62,9 @@ jobs:
       comment-id: ${{ github.event.comment.id }}
       pr-url: ${{ github.event.issue.pull_request.url || github.event.pull_request.url }}
       is-review: ${{ github.event_name == 'pull_request_review_comment' }}
+      # install-command: 'npm install'
+      # autofix-command: 'npm run lint:fix'
+      # test-command: 'npm build'
     secrets:
       # You need set one of these keys
       openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }} # while it allows to use DeepSeek R1 for free, it still required to rate-limiting you
