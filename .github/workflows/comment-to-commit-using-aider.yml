@@ -396,7 +396,7 @@ jobs:
                 repo: context.repo.repo,
                   comment_id: ${{ inputs.comment-id }},
                   content: 'rocket'
-                });
+              });
             }
 
       - name: Show Aider chat history
