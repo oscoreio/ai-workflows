@@ -318,7 +318,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ steps.extract_info.outputs.pr_number }},
-              body: `## Aider Output\n\n${chatContent}`
+              body: `${chatContent}`
             });
 
       - name: Add completed reaction
