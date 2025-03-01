@@ -308,17 +308,36 @@ jobs:
             const { execSync } = require('child_process');
             try {
               chatContent = execSync('langchain summarize --input-file .aider.chat.history.md --prompt "Summarize the chat history. Only summarize what it DID, not settings, time, version, repo-map, token count, etc. Assume that it's you who did the changes, not Aider."', { encoding: 'utf-8' });
-              console.log('CLI Output:', output);
+              console.log('CLI Output:', chatContent);
             } catch (error) {
               console.error('Error running CLI tool:', error);
+              chatContent = 'Failed to generate summary of changes.';
             }
+            
+            // Get list of changed files
+            let changedFiles = '';
+            try {
+              // Use git diff to get changed files
+              const diffOutput = execSync('git diff --name-only -- . \':!.gitignore\'', { encoding: 'utf8' });
+              if (diffOutput.trim()) {
+                changedFiles = '### Changed files:\n```\n' + diffOutput + '```\n\n';
+              } else {
+                changedFiles = '### No files were changed\n\n';
+              }
+            } catch (error) {
+              console.error('Error getting changed files:', error);
+              changedFiles = '### Could not determine changed files\n\n';
+            }
+            
+            // Create workflow run link
+            const workflowRunLink = `${github.server_url}/${github.repository}/actions/runs/${github.run_id}`;
             
             // Create a new comment with the aider output
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ steps.extract_info.outputs.pr_number }},
-              body: `${chatContent}`
+              body: `${chatContent}\n\n${changedFiles}[View workflow run](${workflowRunLink})`
             });
 
       - name: Add completed reaction
