@@ -349,7 +349,7 @@ jobs:
             }
             
             // Create workflow run link - fix to use correct format
-            const workflowRunLink = `${github.server_url}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}`;
+            const workflowRunLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}/job/${context.job}`;
             
             // Create a new comment with the aider output
             await github.rest.issues.createComment({
