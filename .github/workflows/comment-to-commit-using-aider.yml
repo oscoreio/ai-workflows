@@ -30,6 +30,21 @@ on:
         required: false
         type: number
         default: 5000
+      install-command:
+        description: "Command to run to install dependencies"
+        required: false
+        type: string
+        default: ""
+      autofix-command:
+        description: "Command to run to autofix code"
+        required: false
+        type: string
+        default: ""
+      test-command:
+        description: "Command to run tests after changes"
+        required: false
+        type: string
+        default: ""
     secrets:
       openai-api-key:
         description: "OpenAI API key"
@@ -286,6 +301,10 @@ jobs:
           echo "position: ${{ steps.extract_info.outputs.position }}"
           echo "diff_hunk: ${{ steps.extract_info.outputs.diff_hunk }}"
 
+      - name: Install dependencies
+        if: inputs.install-command != ''
+        run: ${{ inputs.install-command }}
+
       - name: Cache pip packages
         uses: actions/cache@v3
         with:
@@ -318,7 +337,9 @@ jobs:
             --message "${{ steps.create_prompt.outputs.result }}" \
             --no-auto-commits \
             --map-tokens ${{ inputs.map-tokens }} \
-            ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
+            ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }} \
+            ${{ inputs.autofix-command != '' ?  '--lint-cmd ' + inputs.autofix-command : '' }} \
+            ${{ inputs.test-command != '' ?  '--auto-test --test-cmd ' + inputs.test-command : '' }}
 
       - name: Check for changes
         id: changes

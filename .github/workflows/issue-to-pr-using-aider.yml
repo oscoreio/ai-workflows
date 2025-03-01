@@ -271,9 +271,9 @@ jobs:
 
             return "";
 
-      - name: Install dependencies in the background
+      - name: Install dependencies
         if: inputs.install-command != ''
-        run: nohup ${{ inputs.install-command }} > /dev/null 2>&1 &
+        run: ${{ inputs.install-command }}
 
       - name: Cache pip packages
         uses: actions/cache@v3
@@ -307,64 +307,62 @@ jobs:
             --message-file .aider.prompt.md \
             --no-auto-commits \
             --map-tokens ${{ inputs.map-tokens }} \
-            ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
+            ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }} \
+            ${{ inputs.autofix-command != '' ?  '--lint-cmd ' + inputs.autofix-command : '' }} \
+            ${{ inputs.test-command != '' ?  '--auto-test --test-cmd ' + inputs.test-command : '' }}
 
-      - name: Install dependencies
-        if: inputs.install-command != ''
-        run: ${{ inputs.install-command }}
+      # - name: Run autofix command
+      #   if: inputs.autofix-command != ''
+      #   continue-on-error: true
+      #   run: ${{ inputs.autofix-command }}
 
-      - name: Run autofix command
-        if: inputs.autofix-command != ''
-        continue-on-error: true
-        run: ${{ inputs.autofix-command }}
-
-      - name: Run tests
-        if: inputs.test-command != ''
-        id: run-tests
-        continue-on-error: true
-        run: |
-          echo "Running tests with command: ${{ inputs.test-command }}"
-          ${{ inputs.test-command }} > .aider.test_output.txt 2>&1
+      # - name: Run tests
+      #   if: inputs.test-command != ''
+      #   id: run-tests
+      #   continue-on-error: true
+      #   run: |
+      #     echo "Running tests with command: ${{ inputs.test-command }}"
+      #     ${{ inputs.test-command }} > .aider.test_output.txt 2>&1
           
-          echo "Output:"
-          cat .aider.test_output.txt
+      #     echo "Output:"
+      #     cat .aider.test_output.txt
           
-          echo "test_exit_code=$?" >> $GITHUB_OUTPUT
+      #     echo "test_exit_code=$?" >> $GITHUB_OUTPUT
 
-      - name: Process test results with Aider
-        if: inputs.test-command != '' && steps.run-tests.outcome == 'failure'
-        env:
-          OPENAI_API_KEY: ${{ secrets.openai-api-key }}
-          OPENROUTER_API_KEY: ${{ secrets.openrouter-api-key }}
-          ANTHROPIC_API_KEY: ${{ secrets.anthropic-api-key }}
-          COHERE_API_KEY: ${{ secrets.cohere-api-key }}
-          GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
-          DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
-          GROQ_API_KEY: ${{ secrets.groq-api-key }}
-        run: |
-          {
-            echo "Test command \`${{ inputs.test-command }}\` failed with exit code ${{ steps.run-tests.outputs.test_exit_code }}. Please fix the code based on the test output:"
-            echo ""
-            echo "\`\`\`"
-            cat .aider.test_output.txt
-            echo "\`\`\`"
-            echo ""
-            echo "Original Aider prompt:"
-            echo ""
-            cat .aider.prompt.md
-            echo ""
-            echo "Please fix the code based on the test output and the original Aider prompt."
-          } > .aider.test-results.md
+      # - name: Process test results with Aider
+      #   if: inputs.test-command != '' && steps.run-tests.outcome == 'failure'
+      #   env:
+      #     OPENAI_API_KEY: ${{ secrets.openai-api-key }}
+      #     OPENROUTER_API_KEY: ${{ secrets.openrouter-api-key }}
+      #     ANTHROPIC_API_KEY: ${{ secrets.anthropic-api-key }}
+      #     COHERE_API_KEY: ${{ secrets.cohere-api-key }}
+      #     GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
+      #     DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
+      #     GROQ_API_KEY: ${{ secrets.groq-api-key }}
+      #   run: |
+      #     {
+      #       echo "Test command \`${{ inputs.test-command }}\` failed with exit code ${{ steps.run-tests.outputs.test_exit_code }}. Please fix the code based on the test output:"
+      #       echo ""
+      #       echo "\`\`\`"
+      #       cat .aider.test_output.txt
+      #       echo "\`\`\`"
+      #       echo ""
+      #       echo "Original Aider prompt:"
+      #       echo ""
+      #       cat .aider.prompt.md
+      #       echo ""
+      #       echo "Please fix the code based on the test output and the original Aider prompt."
+      #     } > .aider.test-results.md
           
-          echo "Aider Prompt:"
-          cat .aider.test-results.md
+      #     echo "Aider Prompt:"
+      #     cat .aider.test-results.md
           
-          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message-file .aider.test-results.md --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
+      #     aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --message-file .aider.test-results.md --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
-      - name: Run autofix command
-        if: inputs.autofix-command != '' && inputs.test-command != '' && steps.run-tests.outcome == 'failure'
-        continue-on-error: true
-        run: ${{ inputs.autofix-command }}
+      # - name: Run autofix command
+      #   if: inputs.autofix-command != '' && inputs.test-command != '' && steps.run-tests.outcome == 'failure'
+      #   continue-on-error: true
+      #   run: ${{ inputs.autofix-command }}
   
       - name: Check for changes
         id: changes
