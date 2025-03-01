@@ -76,7 +76,7 @@ on:
 jobs:
   create-pull-request:
     permissions:
-      issues: read
+      issues: write
       pull-requests: write
       contents: write
       
