@@ -190,6 +190,11 @@ jobs:
             core.setOutput("issue_number", issueNumber);
             core.setOutput("branch", prData.data.head.ref);
             core.setOutput("comment_body", commentData.data.body);
+            if (${{ inputs.is-review }}) {
+              core.setOutput("file_path", commentData.data.path);
+              core.setOutput("position", commentData.data.position);
+              core.setOutput("diff_hunk", commentData.data.diff_hunk);
+            }
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -217,10 +222,13 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const commentBody = "${{ steps.extract_info.outputs.comment_body }}";
+            let commentBody = "${{ steps.extract_info.outputs.comment_body }}";
+            if (${{ inputs.is-review }}) {
+              commentBody = `File: ${{ steps.extract_info.outputs.file_path }}\nPosition: ${{ steps.extract_info.outputs.position }}\nDiff: ${{ steps.extract_info.outputs.diff_hunk }}`;
+            }
             // Remove '@aider' from the comment
             const prompt = commentBody.replace(/@aider/g, '').trim();
-            return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below issue description. \Comment body: ${prompt}`;
+            return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below user comment. \Comment body: ${prompt}`;
 
       - name: Try extract model from labels
         uses: actions/github-script@v7
@@ -266,7 +274,6 @@ jobs:
 
             return "";
 
-
       - name: Show extracted data
         run: |
           echo "PR Number: ${{ steps.extract_info.outputs.pr_number }}"
@@ -275,6 +282,9 @@ jobs:
           echo "prompt: ${{ steps.create_prompt.outputs.result }}"
           echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
           echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
+          echo "file_path: ${{ steps.extract_info.outputs.file_path }}"
+          echo "position: ${{ steps.extract_info.outputs.position }}"
+          echo "diff_hunk: ${{ steps.extract_info.outputs.diff_hunk }}"
 
       - name: Cache pip packages
         uses: actions/cache@v3
