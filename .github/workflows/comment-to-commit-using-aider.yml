@@ -284,17 +284,13 @@ jobs:
           aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --commit --yes-always --watch-files --skip-sanity-check-repo
           git push --force-with-lease -u origin ${{ steps.extract_info.outputs.branch }}
 
-      - name: Upload input history
-        uses: actions/upload-artifact@v4
-        with:
-          name: aider-input-history
-          path: .aider.input.history
+      - name: Show Aider chat history
+        if: always()
+        run: cat .aider.chat.history.md
 
-      - name: Upload chat history
-        uses: actions/upload-artifact@v4
-        with:
-          name: aider-chat-history
-          path: .aider.chat.history.md
+      - name: Show Aider input history
+        if: always()
+        run: cat .aider.input.history
 
       - name: Create comment with Aider output
         if: always()
