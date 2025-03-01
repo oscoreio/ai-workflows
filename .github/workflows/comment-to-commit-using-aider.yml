@@ -358,7 +358,7 @@ jobs:
             
             if (${{ inputs.is-review }}) {
               // Create a new reply to the review comment
-              await github.rest.pulls.createReviewCommentReply({
+              await github.rest.pulls.createReplyForReviewComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: ${{ steps.extract_info.outputs.pr_number }},
