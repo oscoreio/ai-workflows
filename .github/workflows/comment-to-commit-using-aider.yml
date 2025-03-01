@@ -314,23 +314,42 @@ jobs:
               chatContent = 'Failed to generate summary of changes.';
             }
             
-            // Get list of changed files
+            // Get list of changed files from the recent commits
             let changedFiles = '';
             try {
-              // Use git diff to get changed files
-              const diffOutput = execSync('git diff --name-only -- . \':!.gitignore\'', { encoding: 'utf8' });
-              if (diffOutput.trim()) {
-                changedFiles = '### Changed files:\n```\n' + diffOutput + '```\n\n';
+              // Check if there are any recent commits by the bot
+              const authorPattern = 'github-actions[bot]';
+              const recentCommits = execSync(`git log -1 --author="${authorPattern}" --pretty=format:"%h"`, { encoding: 'utf8' });
+              
+              if (recentCommits.trim()) {
+                // Found a recent commit by our bot, get the files from that commit
+                const lastCommitFiles = execSync('git show --name-only --pretty="" HEAD', { encoding: 'utf8' });
+                if (lastCommitFiles.trim()) {
+                  changedFiles = '### Files changed in the latest commit:\n```\n' + lastCommitFiles + '```\n\n';
+                } else {
+                  changedFiles = '### No files were changed in the latest commit\n\n';
+                }
               } else {
-                changedFiles = '### No files were changed\n\n';
+                // Check for uncommitted changes
+                const uncommittedChanges = execSync('git status --porcelain', { encoding: 'utf8' });
+                if (uncommittedChanges.trim()) {
+                  const filesList = uncommittedChanges
+                    .split('\n')
+                    .filter(line => line.trim() !== '')
+                    .map(line => line.substring(3))
+                    .join('\n');
+                  changedFiles = '### Uncommitted changes detected:\n```\n' + filesList + '```\n\n';
+                } else {
+                  changedFiles = '### No changes were detected\n\n';
+                }
               }
             } catch (error) {
-              console.error('Error getting changed files:', error);
+              console.error('Error checking for changes:', error);
               changedFiles = 'Could not determine changed files due to error';
             }
             
-            // Create workflow run link
-            const workflowRunLink = `${github.server_url}/${github.repository}/actions/runs/${github.run_id}`;
+            // Create workflow run link - fix to use correct format
+            const workflowRunLink = `${github.server_url}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}`;
             
             // Create a new comment with the aider output
             await github.rest.issues.createComment({
