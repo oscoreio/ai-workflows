@@ -10,6 +10,11 @@ on:
         description: "URL of the pull request"
         required: true
         type: string
+      is-review:
+        description: "Is this a review comment?"
+        required: false
+        type: boolean
+        default: false
       model:
         description: "Model to use"
         required: false
@@ -62,13 +67,60 @@ jobs:
         id: extract_info
         with:
           script: |
-            // Add "eyes" reaction to the comment
-            await github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: ${{ inputs.comment-id }},
-              content: 'eyes'
-            });
+            if (${{ inputs.is-review }}) {
+              // Add "eyes" reaction to the review comment
+              await github.rest.reactions.createForPullRequestReviewComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{ inputs.comment-id }},
+                content: 'eyes'
+              });
+
+              // List reactions on the review comment and remove any "rocket" reaction
+              const reactions = await github.rest.reactions.listForPullRequestReviewComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{ inputs.comment-id }}
+              });
+              for (const reaction of reactions.data) {
+                if (reaction.content === 'rocket') {
+                  await github.rest.reactions.deleteForPullRequestReviewComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: ${{ inputs.comment-id }},
+                    reaction_id: reaction.id
+                  });
+                }
+              }
+            }
+            else {
+              // Add "eyes" reaction to the comment
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{ inputs.comment-id }},
+                content: 'eyes'
+              });
+              
+              // Check if "completed" reaction exists and delete it
+              const reactions = await github.rest.reactions.listForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{ inputs.comment-id }}
+              });
+              
+              for (const reaction of reactions.data) {
+                if (reaction.content === 'rocket') {
+                  // Delete completed reaction
+                  await github.rest.reactions.deleteForIssueComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    comment_id: ${{ inputs.comment-id }},
+                    reaction_id: reaction.id
+                  });
+                }
+              }
+            }
 
             // Extract PR number from PR URL
             const prUrl = "${{ inputs.pr-url }}";
@@ -81,30 +133,22 @@ jobs:
               pull_number: prNumber
             });
             
-            // Get comment text
-            const commentData = await github.rest.issues.getComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: ${{ inputs.comment-id }}
-            });
-            
-            // Check if "completed" reaction exists and delete it
-            const reactions = await github.rest.reactions.listForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: ${{ inputs.comment-id }}
-            });
-            
-            for (const reaction of reactions.data) {
-              if (reaction.content === 'rocket') {
-                // Delete completed reaction
-                await github.rest.reactions.deleteForIssueComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  comment_id: ${{ inputs.comment-id }},
-                  reaction_id: reaction.id
-                });
-              }
+            let commentData;
+            if (${{ inputs.is-review }}) {
+              // Get comment text
+              commentData = await github.rest.pulls.getReviewComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{ inputs.comment-id }}
+              });
+            }
+            else {
+              // Get comment text
+              commentData = await github.rest.issues.getComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: ${{ inputs.comment-id }}
+              });
             }
             
             // Try to find related issue number from PR title or body

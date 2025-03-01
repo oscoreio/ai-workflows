@@ -48,15 +48,17 @@ name: Comment to Commit using Aider
 on:
   issue_comment:
     types: [created]
+  pull_request_review_comment:
+    types: [created]
 
 jobs:
   generate:
-    # Only run if the comment is on a PR and contains "@aider"
-    if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '@aider') }}
+    if: ${{ contains(github.event.comment.body, '@aider') }}
     uses: oscoreio/ai-workflows/.github/workflows/comment-to-commit-using-aider.yml@main
     with:
       comment-id: ${{ github.event.comment.id }}
-      pr-url: ${{ github.event.issue.pull_request.url }}
+      pr-url: ${{ github.event.issue.pull_request.url || github.event.pull_request.url }}
+      is-review: ${{ github.event_name == 'pull_request_review_comment' }}
     secrets:
       # You need set one of these keys
       openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }} # while it allows to use DeepSeek R1 for free, it still required to rate-limiting you
@@ -71,7 +73,7 @@ jobs:
 ## Model and reasoning effort selection
 
 You can control AI model selection and reasoning effort using GitHub labels:
-- Add label starting with `aider-` to select model (e.g. `aider-gpt-4o`)
+- Add label starting with `aider-` to select model (e.g. `aider-gpt-o3-mini`)
 - Use suffix `-high` for high reasoning effort (e.g. `aider-gpt-4o-high`)
 - Special label `aider-model-r1-free` uses `openrouter/deepseek/deepseek-r1:free`
 
