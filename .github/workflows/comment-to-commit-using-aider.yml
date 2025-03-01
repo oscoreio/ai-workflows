@@ -307,7 +307,7 @@ jobs:
             let chatContent = '';
             const { execSync } = require('child_process');
             try {
-              chatContent = execSync('langchain summarize --input-file .aider.chat.history.md --prompt "Summarize the chat history. Only summarize what it DID, not settings, time, version, repo-map, token count, etc."', { encoding: 'utf-8' });
+              chatContent = execSync('langchain summarize --input-file .aider.chat.history.md --prompt "Summarize the chat history. Only summarize what it DID, not settings, time, version, repo-map, token count, etc. Assume that it's you who did the changes, not Aider."', { encoding: 'utf-8' });
               console.log('CLI Output:', output);
             } catch (error) {
               console.error('Error running CLI tool:', error);
