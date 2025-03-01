@@ -326,7 +326,7 @@ jobs:
               }
             } catch (error) {
               console.error('Error getting changed files:', error);
-              changedFiles = '### Could not determine changed files\n\n';
+              changedFiles = 'Could not determine changed files due to error';
             }
             
             // Create workflow run link
