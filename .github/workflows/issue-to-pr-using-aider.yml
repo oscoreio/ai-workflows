@@ -240,7 +240,7 @@ jobs:
             });
             const labels = result.data.labels;
 
-            if (labels.some(label => label.name.startsWith('aider-model-r1-free'))) {
+            if (labels.some(label => label.name.startsWith('aider-r1-free'))) {
               return 'openrouter/deepseek/deepseek-r1:free';
             }
 
