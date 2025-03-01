@@ -510,7 +510,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ inputs.issue-number }},
-              body: `${chatContent}\n\n${changedFiles}${prLink}[View workflow run](${workflowRunLink})`
+              body: `${chatContent}\n\n${prLink}[View workflow run](${workflowRunLink})`
             });
 
       - name: Add completed reaction

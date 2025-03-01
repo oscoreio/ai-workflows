@@ -315,14 +315,14 @@ jobs:
             }
             
             // Create workflow run link - fix to use correct format
-            const workflowRunLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}/job/${context.job}`;
+            const workflowRunLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}/job/${context.jobId}`;
             
             // Create a new comment with the aider output
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ steps.extract_info.outputs.pr_number }},
-              body: `${chatContent}\n\n${changedFiles}[View workflow run](${workflowRunLink})`
+              body: `${chatContent}\n\n[View workflow run](${workflowRunLink})`
             });
 
       - name: Add completed reaction
