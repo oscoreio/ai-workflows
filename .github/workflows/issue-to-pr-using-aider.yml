@@ -82,6 +82,38 @@ jobs:
       
     runs-on: ubuntu-latest
     steps:
+      - name: Add eyes reaction to issue
+        uses: actions/github-script@v7
+        id: add_eyes_reaction
+        with:
+          script: |
+            // Add "eyes" reaction to the issue
+            await github.rest.reactions.createForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue-number }},
+              content: 'eyes'
+            });
+            
+            // Check if "completed" reaction exists and delete it
+            const reactions = await github.rest.reactions.listForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue-number }}
+            });
+            
+            for (const reaction of reactions.data) {
+              if (reaction.content === 'rocket') {
+                // Delete completed reaction
+                await github.rest.reactions.deleteForIssue({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: ${{ inputs.issue-number }},
+                  reaction_id: reaction.id
+                });
+              }
+            }
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -437,14 +469,96 @@ jobs:
 
       - name: Create pull request
         if: steps.changes.outputs.has_changes == 'true'
+        id: create_pr
         env:
           GITHUB_TOKEN: ${{ secrets.personal-access-token || secrets.GITHUB_TOKEN }}
         run: |
-          gh pr create \
+          pr_url=$(gh pr create \
           -B ${{ inputs.default-branch }} \
           -H ${{ steps.branch.outputs.branch_name }} \
           --title "${{ steps.pr.outputs.name }}" \
-          --body-file .aider.pr-description.md
+          --body-file .aider.pr-description.md)
+          echo "pr_url=$pr_url" >> $GITHUB_OUTPUT
+
+      - name: Create comment with Aider output
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Summarize the aider chat history file
+            let chatContent = '';
+            const { execSync } = require('child_process');
+            try {
+              chatContent = execSync('langchain summarize --input-file .aider.chat.history.md --prompt "Summarize the chat history. Only summarize what it DID, not settings, time, version, repo-map, token count, etc. Assume that it\'s you who did the changes, not Aider."', { encoding: 'utf-8' });
+              console.log('CLI Output:', chatContent);
+            } catch (error) {
+              console.error('Error running CLI tool:', error);
+              chatContent = 'Failed to generate summary of changes.';
+            }
+            
+            // Get list of changed files from the recent commits
+            let changedFiles = '';
+            try {
+              // Check if there are any recent commits by the bot
+              const authorPattern = 'github-actions[bot]';
+              const recentCommits = execSync(`git log -1 --author="${authorPattern}" --pretty=format:"%h"`, { encoding: 'utf8' });
+              
+              if (recentCommits.trim()) {
+                // Found a recent commit by our bot, get the files from that commit
+                const lastCommitFiles = execSync('git show --name-only --pretty="" HEAD', { encoding: 'utf8' });
+                if (lastCommitFiles.trim()) {
+                  changedFiles = '### Files changed in the latest commit:\n```\n' + lastCommitFiles + '```\n\n';
+                } else {
+                  changedFiles = '### No files were changed in the latest commit\n\n';
+                }
+              } else {
+                // Check for uncommitted changes
+                const uncommittedChanges = execSync('git status --porcelain', { encoding: 'utf8' });
+                if (uncommittedChanges.trim()) {
+                  const filesList = uncommittedChanges
+                    .split('\n')
+                    .filter(line => line.trim() !== '')
+                    .map(line => line.substring(3))
+                    .join('\n');
+                  changedFiles = '### Uncommitted changes detected:\n```\n' + filesList + '```\n\n';
+                } else {
+                  changedFiles = '### No changes were detected\n\n';
+                }
+              }
+            } catch (error) {
+              console.error('Error checking for changes:', error);
+              changedFiles = 'Could not determine changed files due to error';
+            }
+            
+            // Create workflow run link
+            const workflowRunLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}/job/${context.job}`;
+            
+            // Get the PR URL if available, add link to PR
+            let prLink = '';
+            if ('${{ steps.create_pr.outputs.pr_url }}') {
+              prLink = '### [View the Pull Request](${{ steps.create_pr.outputs.pr_url }})\n\n';
+            }
+            
+            // Create a new comment with the aider output on the issue
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue-number }},
+              body: `${chatContent}\n\n${changedFiles}${prLink}[View workflow run](${workflowRunLink})`
+            });
+
+      - name: Add completed reaction
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Add "completed" reaction (rocket) to the issue
+            await github.rest.reactions.createForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue-number }},
+              content: 'rocket'
+            });
 
       - name: Show extracted data
         if: always()
