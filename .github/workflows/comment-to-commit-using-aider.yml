@@ -255,7 +255,15 @@ jobs:
         run: |
           pip install aider-chat
           
-          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always --watch-files --skip-sanity-check-repo --message "${{ steps.create_prompt.outputs.result }}" --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
+          aider
+            --model "${{ steps.try_extract_model_from_labels.outputs.result }}" 
+            --yes-always
+            --watch-files
+            --skip-sanity-check-repo
+            --message "${{ steps.create_prompt.outputs.result }}"
+            --no-auto-commits
+            --map-tokens ${{ inputs.map-tokens }}
+            ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
       - name: Check for changes
         id: changes
@@ -283,14 +291,6 @@ jobs:
           git add . ':!.gitignore'
           aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --commit --yes-always --watch-files --skip-sanity-check-repo
           git push --force-with-lease -u origin ${{ steps.extract_info.outputs.branch }}
-
-      - name: Show Aider chat history
-        if: always()
-        run: cat .aider.chat.history.md
-
-      - name: Show Aider input history
-        if: always()
-        run: cat .aider.input.history
 
       - name: Create comment with Aider output
         if: always()
@@ -331,3 +331,21 @@ jobs:
               comment_id: ${{ inputs.comment-id }},
               content: 'rocket'
             });
+
+      - name: Show Aider chat history
+        if: always()
+        run: cat .aider.chat.history.md
+
+      - name: Show Aider input history
+        if: always()
+        run: cat .aider.input.history
+
+      - name: Show extracted data
+        if: always()
+        run: |
+          echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
+          echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
+          echo "branch: ${{ steps.branch.outputs.branch_name }}"
+          echo "pr-name: ${{ steps.pr.outputs.name }}"
+          echo "pr-name: ${{ steps.pr-description.outputs.value }}"
+          echo "has_changes: ${{ steps.changes.outputs.has_changes }}"

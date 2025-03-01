@@ -298,7 +298,15 @@ jobs:
         run: |
           pip install aider-chat
           
-          aider --model "${{ steps.try_extract_model_from_labels.outputs.result }}" --yes-always  --watch-files --skip-sanity-check-repo --message-file .aider.prompt.md --no-auto-commits --map-tokens ${{ inputs.map-tokens }} ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
+          aider
+            --model "${{ steps.try_extract_model_from_labels.outputs.result }}"
+            --yes-always
+            --watch-files
+            --skip-sanity-check-repo
+            --message-file .aider.prompt.md
+            --no-auto-commits
+            --map-tokens ${{ inputs.map-tokens }}
+            ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}
 
       - name: Install dependencies
         if: inputs.install-command != ''
