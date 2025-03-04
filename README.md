@@ -86,13 +86,13 @@ You can control AI model selection and reasoning effort using GitHub labels:
 ## All workflows requires access to LLM providers
 
 You need to get API key from one of providers and set it in `settings/secrets/actions` of your repo or on organization level:
-OPENAI_API_KEY - https://platform.openai.com/api-keys
-OPENROUTER_API_KEY - https://openrouter.ai/settings/keys
-ANTHROPIC_API_KEY - https://console.anthropic.com/settings/keys
-GROQ_API_KEY - https://console.groq.com/keys
-GEMINI_API_KEY - https://aistudio.google.com/app/apikey
-COHERE_API_KEY - https://dashboard.cohere.com/api-keys
-DEEPSEEK_API_KEY - https://platform.deepseek.com/api_keys
+OPENAI_API_KEY - https://platform.openai.com/api-keys  
+OPENROUTER_API_KEY - https://openrouter.ai/settings/keys  
+ANTHROPIC_API_KEY - https://console.anthropic.com/settings/keys  
+GROQ_API_KEY - https://console.groq.com/keys  
+GEMINI_API_KEY - https://aistudio.google.com/app/apikey  
+COHERE_API_KEY - https://dashboard.cohere.com/api-keys  
+DEEPSEEK_API_KEY - https://platform.deepseek.com/api_keys  
 
 ### Disclaimer
 
