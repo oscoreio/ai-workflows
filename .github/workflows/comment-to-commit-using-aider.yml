@@ -330,14 +330,14 @@ jobs:
           
           # Conditionally define LINT_CMD if autofix-command is set
           if [ -n "${{ inputs.autofix-command }}" ]; then
-            LINT_CMD="--lint-cmd ${{ inputs.autofix-command }}"
+            LINT_CMD="--lint-cmd '${{ inputs.autofix-command }}'"
           else
             LINT_CMD=""
           fi
 
           # Conditionally define TEST_CMD if test-command is set
           if [ -n "${{ inputs.test-command }}" ]; then
-            TEST_CMD="--auto-test --test-cmd ${{ inputs.test-command }}"
+            TEST_CMD="--auto-test --test-cmd '${{ inputs.test-command }}'"
           else
             TEST_CMD=""
           fi
