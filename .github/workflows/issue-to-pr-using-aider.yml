@@ -300,16 +300,16 @@ jobs:
           
           # Conditionally define LINT_CMD if autofix-command is set
           if [ -n "${{ inputs.autofix-command }}" ]; then
-            LINT_CMD="--lint-cmd '${{ inputs.autofix-command }}'"
+            LINT_CMD=(--lint-cmd "${{ inputs.autofix-command }}")
           else
-            LINT_CMD=""
+            LINT_CMD=()
           fi
 
           # Conditionally define TEST_CMD if test-command is set
           if [ -n "${{ inputs.test-command }}" ]; then
-            TEST_CMD="--auto-test --test-cmd '${{ inputs.test-command }}'"
+            TEST_CMD=(--auto-test --test-cmd "${{ inputs.test-command }}")
           else
-            TEST_CMD=""
+            TEST_CMD=()
           fi
 
           aider \
@@ -322,8 +322,8 @@ jobs:
             --no-auto-commits \
             --map-tokens ${{ inputs.map-tokens }} \
             ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }} \
-            $LINT_CMD \
-            $TEST_CMD
+            "${LINT_CMD[@]}" \
+            "${TEST_CMD[@]}"
 
       # - name: Run autofix command
       #   if: inputs.autofix-command != ''
@@ -405,142 +405,4 @@ jobs:
             echo '```'
             echo "$issue_data"
             echo "$issue_comments"
-            echo '```'
-            echo ""
-            echo "Chat history of the Aider chat:"
-            echo '```'
-            echo "$chat_history"
-            echo '```'
-            echo "Returns answer in the format of a PR title: 'fix(#123): Fix the bug' or 'feat(#123): Add new feature'."
-            echo "Do not incude any whitespaces on the start or end of the title."
-            echo "Do not incude any markdown formatting in the title."
-          } > .aider.pr-name.prompt.md
-          
-          cat .aider.pr-name.prompt.md
-          
-          name=$(langchain generate --input-file .aider.pr-name.prompt.md)
-          
-          echo $name
-          echo "name=$name" >> $GITHUB_OUTPUT
-
-      - name: Generate PR description
-        if: steps.changes.outputs.has_changes == 'true'
-        id: pr-description
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          issue_data=$(gh issue view ${{ inputs.issue-number }})
-          issue_comments=$(gh issue view ${{ inputs.issue-number }} --comments)
-          chat_history=$(cat .aider.chat.history.md)
-          
-          {
-            echo "Return suitable description/summary for a PR that closes issue with these data:"
-            echo ""
-            echo '```'
-            echo "$issue_data"
-            echo "$issue_comments"
-            echo '```'
-            echo ""
-            echo "Chat history of the Aider chat:"
-            echo '```'
-            echo "$chat_history"
-            echo '```'
-            echo "It will be used as a PR description using markdown format."
-          } > .aider.pr-description.prompt.md
-          
-          cat .aider.pr-description.prompt.md
-          
-          pr_body=$(langchain generate --input-file .aider.pr-description.prompt.md)
-          
-          echo $pr_body
-          
-          {
-            echo "Closes #${{ inputs.issue-number }}"
-            echo ""
-            echo "$pr_body"
-          } > .aider.pr-description.md
-
-      - name: Push changes
-        if: steps.changes.outputs.has_changes == 'true'
-        run: |
-          git add . ':!.gitignore'
-          git commit -m "${{ steps.pr.outputs.name }}"
-          git push --force-with-lease -u origin ${{ steps.branch.outputs.branch_name }}
-
-      - name: Wait for 15 seconds
-        if: steps.changes.outputs.has_changes == 'true'
-        run: sleep 15
-
-      - name: Create pull request
-        if: steps.changes.outputs.has_changes == 'true'
-        id: create_pr
-        env:
-          GITHUB_TOKEN: ${{ secrets.personal-access-token || secrets.GITHUB_TOKEN }}
-        run: |
-          pr_url=$(gh pr create \
-          -B ${{ inputs.default-branch }} \
-          -H ${{ steps.branch.outputs.branch_name }} \
-          --title "${{ steps.pr.outputs.name }}" \
-          --body-file .aider.pr-description.md)
-          echo "pr_url=$pr_url" >> $GITHUB_OUTPUT
-
-      - name: Create comment with Aider output
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // Summarize the aider chat history file
-            let chatContent = '';
-            const { execSync } = require('child_process');
-            try {
-              chatContent = execSync('langchain summarize --input-file .aider.chat.history.md --prompt "Summarize the chat history. Only summarize what it DID, not settings, time, version, repo-map, token count, etc. Assume that it\'s you who did the changes, not Aider. It should be a first person summary of what it did."', { encoding: 'utf-8' });
-              console.log('CLI Output:', chatContent);
-            } catch (error) {
-              console.error('Error running CLI tool:', error);
-              chatContent = 'Failed to generate summary of changes.';
-            }
-            
-            // Create workflow run link
-            const workflowRunLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}/job/${github.job}`;
-            
-            // Get the PR URL if available, add link to PR
-            let prLink = '';
-            if ('${{ steps.create_pr.outputs.pr_url }}') {
-              prLink = '### [View the Pull Request](${{ steps.create_pr.outputs.pr_url }})\n\n';
-            }
-            
-            // Create a new comment with the aider output on the issue
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: ${{ inputs.issue-number }},
-              body: `${chatContent}\n\n${prLink}[View workflow run](${workflowRunLink})`
-            });
-
-      - name: Add completed reaction
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            // Add "completed" reaction (rocket) to the issue
-            await github.rest.reactions.createForIssue({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: ${{ inputs.issue-number }},
-              content: 'rocket'
-            });
-
-      - name: Show extracted data
-        if: always()
-        run: |
-          echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
-          echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
-          echo "branch: ${{ steps.branch.outputs.branch_name }}"
-          echo "pr-name: ${{ steps.pr.outputs.name }}"
-          echo "pr-name: ${{ steps.pr-description.outputs.value }}"
-          echo "has_changes: ${{ steps.changes.outputs.has_changes }}"
-
-      - name: Show Aider chat history
-        if: always()
-        run: cat .aider.chat.history.md
+            echo '```
