@@ -405,7 +405,6 @@ jobs:
             --map-tokens ${{ inputs.map-tokens }} \
             --no-gitignore \
             --no-detect-urls \
-            --no-check-model-accepts-settings \
             ${{ steps.process_images.outputs.result }} \
             ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }} \
             "${LINT_CMD[@]}" \
