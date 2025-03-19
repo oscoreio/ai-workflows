@@ -276,7 +276,7 @@ jobs:
               // Create directory for images
               execSync('mkdir -p .aider-images');
               
-              // Download images using curl via execSync
+              // Download images using GitHub CLI instead of curl (handles authentication)
               let addCommands = [];
               
               let i = 0;
@@ -287,10 +287,10 @@ jobs:
                   // Generate filename from URL
                   const filename = `.aider-images/${i}.png`;
                   
-                  // Download image using curl (more reliable in GitHub Actions)
+                  // Download image using GitHub CLI instead of curl (handles authentication)
                   console.log(`Downloading ${url} to ${filename}`);
                   try {
-                    execSync(`curl -s -L "${url}" -o "${filename}"`);
+                    execSync(`gh api ${url} > "${filename}"`);
                     
                     // Add command for Aider
                     addCommands.push(filename);
