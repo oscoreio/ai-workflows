@@ -227,6 +227,85 @@ jobs:
           echo "Aider Prompt:"
           cat .aider.prompt.md
           
+      - name: Extract, download and prepare images from issue
+        uses: actions/github-script@v7
+        id: process_images
+        with:
+          result-encoding: string
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const { execSync } = require('child_process');
+            
+            // Get issue and comments
+            const result = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue-number }}
+            });
+            
+            const body = result.data.body || '';
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ inputs.issue-number }}
+            });
+            
+            // Regular expression to match GitHub image URLs
+            const imageRegex = /!\[.*?\]\((https:\/\/github\.com\/user-attachments\/assets\/[a-f0-9-]+)\)/g;
+            
+            // Extract images from issue body and comments
+            let match;
+            let imageUrls = [];
+            while ((match = imageRegex.exec(body)) !== null) {
+              imageUrls.push(match[1]);
+            }
+            
+            for (const comment of comments.data) {
+              const commentBody = comment.body || '';
+              imageRegex.lastIndex = 0; // Reset regex index
+              while ((match = imageRegex.exec(commentBody)) !== null) {
+                imageUrls.push(match[1]);
+              }
+            }
+            
+            // Process images if found
+            if (imageUrls.length > 0) {
+              console.log(`Found ${imageUrls.length} image(s) in issue and comments`);
+              
+              // Create directory for images
+              execSync('mkdir -p .aider-images');
+              
+              // Download images using curl via execSync
+              let addCommands = [];
+              
+              for (const url of imageUrls) {
+                if (url) {
+                  // Generate filename from URL
+                  const filename = `.aider-images/${path.basename(url)}.png`;
+                  
+                  // Download image using curl (more reliable in GitHub Actions)
+                  console.log(`Downloading ${url} to ${filename}`);
+                  try {
+                    execSync(`curl -s -L "${url}" -o "${filename}"`);
+                    
+                    // Add command for Aider
+                    addCommands.push(`/add ${filename}`);
+                  } catch (error) {
+                    console.error(`Error downloading ${url}: ${error.message}`);
+                  }
+                }
+              }
+              
+              // Return args for later use
+              const args = addCommands.join(' ');
+              console.log("Aider args:", args);
+              return args;
+            } else {
+              console.log("No images found in issue or comments");
+              return '';
+            }
+
       - name: Try extract model from labels
         uses: actions/github-script@v7
         id: try_extract_model_from_labels
@@ -321,6 +400,7 @@ jobs:
             --message-file .aider.prompt.md \
             --no-auto-commits \
             --map-tokens ${{ inputs.map-tokens }} \
+            ${{ steps.process_images.outputs.result }} \
             ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }} \
             "${LINT_CMD[@]}" \
             "${TEST_CMD[@]}"
