@@ -292,7 +292,9 @@ jobs:
                   // Download image using GitHub CLI instead of curl (handles authentication)
                   console.log(`Downloading ${url} to ${filename}`);
                   try {
-                    execSync(`gh api ${url} > "${filename}"`);
+                    execSync(`gh api ${url} > "${filename}"`, { 
+                      env: { ...process.env, GITHUB_TOKEN: process.env.GITHUB_TOKEN }
+                    });
                     
                     // Add command for Aider
                     addCommands.push(filename);
