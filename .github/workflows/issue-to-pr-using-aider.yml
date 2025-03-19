@@ -400,6 +400,7 @@ jobs:
             --message-file .aider.prompt.md \
             --no-auto-commits \
             --map-tokens ${{ inputs.map-tokens }} \
+            --no-gitignore \
             ${{ steps.process_images.outputs.result }} \
             ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }} \
             "${LINT_CMD[@]}" \
