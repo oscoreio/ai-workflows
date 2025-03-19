@@ -229,6 +229,8 @@ jobs:
           
       - name: Extract, download and prepare images from issue
         uses: actions/github-script@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         id: process_images
         with:
           result-encoding: string
