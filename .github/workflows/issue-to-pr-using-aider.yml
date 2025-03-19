@@ -279,10 +279,13 @@ jobs:
               // Download images using curl via execSync
               let addCommands = [];
               
+              let i = 0;
               for (const url of imageUrls) {
                 if (url) {
+                  i++;
+                  
                   // Generate filename from URL
-                  const filename = `.aider-images/${path.basename(url)}.png`;
+                  const filename = `.aider-images/${i}.png`;
                   
                   // Download image using curl (more reliable in GitHub Actions)
                   console.log(`Downloading ${url} to ${filename}`);
@@ -290,7 +293,7 @@ jobs:
                     execSync(`curl -s -L "${url}" -o "${filename}"`);
                     
                     // Add command for Aider
-                    addCommands.push(`/add ${filename}`);
+                    addCommands.push(filename);
                   } catch (error) {
                     console.error(`Error downloading ${url}: ${error.message}`);
                   }
@@ -402,6 +405,7 @@ jobs:
             --map-tokens ${{ inputs.map-tokens }} \
             --no-gitignore \
             --no-detect-urls \
+            --no-check-model-accepts-settings \
             ${{ steps.process_images.outputs.result }} \
             ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }} \
             "${LINT_CMD[@]}" \
@@ -471,6 +475,7 @@ jobs:
           fi
 
       - name: Generate PR name
+        if: steps.changes.outputs.has_changes == 'true'
         id: pr
         continue-on-error: true
         shell: bash
