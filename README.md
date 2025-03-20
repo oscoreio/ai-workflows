@@ -39,6 +39,8 @@ jobs:
       cohere-api-key: ${{ secrets.COHERE_API_KEY }}
       deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
 ```
+![image](https://github.com/user-attachments/assets/8382f4cb-4870-43ca-bd6b-46bc1a172d69)
+
 
 ## Comment to commit using [Aider](https://aider.chat/)
 
