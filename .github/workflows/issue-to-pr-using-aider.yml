@@ -160,12 +160,11 @@ jobs:
             echo "List of all files in the repo:"
             echo "$file_list"
             echo "------------------------------"
-            echo "Returns answer in same format as in \`List of all files in the repo:\` block"
           } > .aider.suitable-files.prompt.md
           
           cat .aider.suitable-files.prompt.md
           
-          suitable_files=$(langchain generate --input-file .aider.suitable-files.prompt.md)
+          suitable_files=$(langchain do --format string[] --input-file .aider.suitable-files.prompt.md)
           
           # Create suitable files with dependecies prompt; escape backticks to avoid unwanted command substitution
           {
@@ -176,7 +175,6 @@ jobs:
             echo "List of all files in the repo:"
             echo "$file_list"
             echo "------------------------------"
-            echo "Returns answer in same format as in \`List of all files in the repo:\` block"
           } > .aider.suitable-files-with-deps.prompt.md
           
           # Write all content of suitable files to .aider.suitable-files-with-deps.prompt.md
@@ -201,7 +199,7 @@ jobs:
           
           cat .aider.suitable-files-with-deps.prompt.md
           
-          suitable_files_with_deps=$(langchain generate --input-file .aider.suitable-files-with-deps.prompt.md)
+          suitable_files_with_deps=$(langchain do --format string[] --input-file .aider.suitable-files-with-deps.prompt.md)
           
           echo "Suitable files with dependencies:"
           echo "$suitable_files_with_deps"
@@ -554,12 +552,11 @@ jobs:
             echo '```'
             echo "$chat_history"
             echo '```'
-            echo "It will be used as a PR description using markdown format."
           } > .aider.pr-description.prompt.md
           
           cat .aider.pr-description.prompt.md
           
-          pr_body=$(langchain generate --input-file .aider.pr-description.prompt.md)
+          pr_body=$(langchain do --format markdown --input-file .aider.pr-description.prompt.md)
           
           echo $pr_body
           
