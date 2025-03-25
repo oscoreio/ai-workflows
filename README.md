@@ -14,6 +14,11 @@ on:
   issues:
     types: [opened, labeled]
 
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
 jobs:
   generate:
     # Run the job if:
@@ -55,6 +60,11 @@ on:
     types: [created]
   pull_request_review_comment:
     types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   generate:
