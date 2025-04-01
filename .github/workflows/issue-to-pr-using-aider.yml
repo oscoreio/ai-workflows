@@ -162,9 +162,17 @@ jobs:
             echo "------------------------------"
           } > .aider.suitable-files.prompt.md
           
+          echo "###################################################"
+          echo "Suitable files:PROMPT"
           cat .aider.suitable-files.prompt.md
-          
+          echo "###################################################"
+
           suitable_files=$(langchain do --format string[] --input-file .aider.suitable-files.prompt.md)
+
+          echo "###################################################"
+          echo "Suitable files:ANSWER"
+          echo "$suitable_files"
+          echo "###################################################"
           
           # Create suitable files with dependecies prompt; escape backticks to avoid unwanted command substitution
           {
@@ -197,12 +205,17 @@ jobs:
             fi
           done
           
+          echo "###################################################"
+          echo "Suitable files with dependencies:PROMPT"
           cat .aider.suitable-files-with-deps.prompt.md
+          echo "###################################################"
           
           suitable_files_with_deps=$(langchain do --format string[] --input-file .aider.suitable-files-with-deps.prompt.md)
           
-          echo "Suitable files with dependencies:"
+          echo "###################################################"
+          echo "Suitable files with dependencies:ANSWER"
           echo "$suitable_files_with_deps"
+          echo "###################################################"
           
           # Create full Aider prompt
           {
@@ -222,8 +235,10 @@ jobs:
             echo '```'
           } > .aider.prompt.md
           
+          echo "###################################################"
           echo "Aider Prompt:"
           cat .aider.prompt.md
+          echo "###################################################"
           
       - name: Extract, download and prepare images from issue
         uses: actions/github-script@v7
