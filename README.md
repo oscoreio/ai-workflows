@@ -91,7 +91,7 @@ jobs:
 ## Model and reasoning effort selection
 
 You can control AI model selection and reasoning effort using GitHub labels:
-- Add label starting with `aider-` to select model (e.g. `aider-gpt-o3-mini`)
+- Add label starting with `aider-` to select model (e.g. `aider-o3-mini`)
 - Use suffix `-high` for high reasoning effort (e.g. `aider-gpt-4o-high`)
 - Special label `aider-r1-free` uses `openrouter/deepseek/deepseek-r1:free`
 
