@@ -535,7 +535,7 @@ jobs:
           
           cat .aider.pr-name.prompt.md
           
-          name=$(langchain generate --input-file .aider.pr-name.prompt.md)
+          name=$(langchain do --format string --input-file .aider.pr-name.prompt.md)
           
           echo $name
           echo "name=$name" >> $GITHUB_OUTPUT
