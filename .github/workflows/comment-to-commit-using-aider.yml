@@ -132,7 +132,7 @@ jobs:
               for (const reaction of reactions.data) {
                 if (reaction.content === 'rocket') {
                   // Delete completed reaction
-                  await github.rest.reactions.deleteForIssueComment({
+                  await github.rest.reactions.delete({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     comment_id: ${{ inputs.comment-id }},
