@@ -4,12 +4,11 @@ globs:
 alwaysApply: true
 ---
 ---
-description: Always include Octokit REST.js v21 documentation
-globs: []
+description: Always include Octokit REST.js v21 docs
 alwaysApply: true
 ---
 
-- Use the [Octokit REST.js v21 documentation](mdc:https:/octokit.github.io/rest.js/v21) as the primary reference for all GitHub API calls.
-- Prefer Octokit client methods over raw fetch/axios.
-- Follow the documented input/output shapes for every method.
-- Handle pagination, previews, and authentication as described in the docs.
+- Use the [Octokit REST.js v21 docs](mdc:https:/octokit.github.io/rest.js/v21) for any GitHub API operations.
+- Prefer `github.rest.*` over raw HTTP or custom wrappers.
+- Reference specific `reactions`, `issues`, `pulls`, `comments` methods based on your usage in workflows.
+- Follow pagination, authentication, and error handling recommendations from the docs.
