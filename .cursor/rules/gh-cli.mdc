@@ -1,0 +1,15 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Always include GitHub CLI (gh) manual
+globs: []
+alwaysApply: true
+---
+
+- Use the [GitHub CLI manual](mdc:https:/cli.github.com/manual) as the reference for all CLI-based GitHub operations.
+- Prefer using `gh` commands over manual API calls for scripting and automation tasks.
+- Ensure correct syntax, flags, and authentication behavior based on the docs.
+- Apply recommended patterns for issues, PRs, repos, workflows, etc.
