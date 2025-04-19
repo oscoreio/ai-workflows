@@ -104,11 +104,11 @@ jobs:
               });
               for (const reaction of reactions.data) {
                 if (reaction.content === 'rocket') {
-                  await github.rest.reactions.deleteForPullRequestReviewComment({
+                  await github.rest.reactions.delete({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    comment_id: ${{ inputs.comment-id }},
-                    reaction_id: reaction.id
+                    reaction_id: reaction.id,
+                    comment_id: ${{ inputs.comment-id }}
                   });
                 }
               }
