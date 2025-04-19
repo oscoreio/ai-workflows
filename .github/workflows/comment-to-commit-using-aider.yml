@@ -104,11 +104,11 @@ jobs:
               });
               for (const reaction of reactions.data) {
                 if (reaction.content === 'rocket') {
-                  await github.rest.reactions.delete({
+                  await github.rest.reactions.deleteForPullRequestReviewComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
-                    reaction_id: reaction.id,
-                    comment_id: ${{ inputs.comment-id }}
+                    comment_id: ${{ inputs.comment-id }},
+                    reaction_id: reaction.id
                   });
                 }
               }
@@ -132,7 +132,7 @@ jobs:
               for (const reaction of reactions.data) {
                 if (reaction.content === 'rocket') {
                   // Delete completed reaction
-                  await github.rest.reactions.delete({
+                  await github.rest.reactions.deleteForIssueComment({
                     owner: context.repo.owner,
                     repo: context.repo.repo,
                     comment_id: ${{ inputs.comment-id }},
