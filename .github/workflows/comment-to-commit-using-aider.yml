@@ -19,7 +19,12 @@ on:
         description: "Model to use"
         required: false
         type: string
-        default: "o3-mini"
+        default: "o4-mini"
+      provider:
+        description: "Provider to use"
+        required: false
+        type: string
+        default: "openai"
       chat-timeout:
         description: "Timeout for chat in minutes to prevent burning your credits"
         required: false
@@ -222,9 +227,7 @@ jobs:
           dotnet-version: 9.0.x
 
       - name: Install LangChain CLI
-        run: |
-          dotnet tool install --global langchain.cli --prerelease
-          langchain auth openai ${{ secrets.openai-api-key }} --model latest-smart
+        run: dotnet tool install --global langchain.cli --prerelease
 
       - name: Setup Git user
         run: |
@@ -385,13 +388,21 @@ jobs:
       - name: Create comment with Aider output
         if: always()
         uses: actions/github-script@v7
+        env:
+          OPENAI_API_KEY: ${{ secrets.openai-api-key }}
+          OPENROUTER_API_KEY: ${{ secrets.openrouter-api-key }}
+          ANTHROPIC_API_KEY: ${{ secrets.anthropic-api-key }}
+          COHERE_API_KEY: ${{ secrets.cohere-api-key }}
+          GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
+          DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
+          GROQ_API_KEY: ${{ secrets.groq-api-key }}
         with:
           script: |
             // Summarize the aider chat history file
             let chatContent = '';
             const { execSync } = require('child_process');
             try {
-              chatContent = execSync('langchain summarize --input-file .aider.chat.history.md --prompt "Summarize the chat history. Only summarize what it DID, not settings, time, version, repo-map, token count, etc. Assume that it\'s you who did the changes, not Aider. It should be a first person summary of what it did."', { encoding: 'utf-8' });
+              chatContent = execSync('langchain do --input-file .aider.chat.history.md --input "Summarize the chat history in 20 words. Only summarize what it DID, not settings, time, version, repo-map, token count, etc. Assume that it\'s you who did the changes, not Aider. It should be a first person summary of what it did." --provider ${{ inputs.provider }}', { encoding: 'utf-8' });
               console.log('CLI Output:', chatContent);
             } catch (error) {
               console.error('Error running CLI tool:', error);
