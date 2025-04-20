@@ -475,10 +475,6 @@ jobs:
         if: always()
         run: cat .aider.chat.history.md
 
-      - name: Show Aider input history
-        if: always()
-        run: cat .aider.input.history
-
       - name: Show extracted data
         if: always()
         run: |
