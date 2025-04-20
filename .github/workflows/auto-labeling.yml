@@ -67,14 +67,17 @@ jobs:
           GROQ_API_KEY: ${{ secrets.groq-api-key }}
         run: |
           ISSUE_DATA=$(gh issue view ${{ inputs.issue-number }})
-          AVAILABLE_LABELS=$(gh label list --jq '.[].name' --json name | tr '\n' ',')
+          AVAILABLE_LABELS=$(gh label list)
           
           {
-            echo "Return labels for issue with these data:"
+            echo "Return suitable labels(names) for issue with these data:"
             echo "----------------------------------------"
             echo "$ISSUE_DATA"
             echo "----------------------------------------"
-            echo "Available labels: $AVAILABLE_LABELS"
+            echo "Available labels:"
+            echo "----------------------------------------"
+            echo "$AVAILABLE_LABELS"
+            echo "----------------------------------------"
           } > .prompt.md
           
           echo "###################################################"
