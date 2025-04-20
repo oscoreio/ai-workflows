@@ -92,10 +92,6 @@ jobs:
           echo "$NEW_LABELS"
           echo "###################################################"
           
-          # Example output in comment, not part of execution
-          echo "# Example output: --add-label \"vector databases\" --add-label \"enhancement\"" 
-          
-          # Construct arguments from NEW_LABELS
           ARGS=""
           echo "$NEW_LABELS" | while read -r label; do
             if [ -n "$label" ]; then
@@ -103,11 +99,7 @@ jobs:
             fi
           done
           
-          # Store the command in an environment variable
-          LABEL_COMMAND="gh issue edit ${{ inputs.issue-number }} $ARGS"
+          COMMAND="gh issue edit ${{ inputs.issue-number }} $ARGS"
           
-          # Show the constructed command
-          echo "Command to execute: $LABEL_COMMAND"
-          
-          # Apply labels to the issue
-          eval "$LABEL_COMMAND"
+          echo "Command to execute: $COMMAND"
+          eval "$COMMAND"
