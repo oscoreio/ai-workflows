@@ -103,5 +103,11 @@ jobs:
             fi
           done
           
+          # Store the command in an environment variable
+          LABEL_COMMAND="gh issue edit ${{ inputs.issue-number }} $ARGS"
+          
+          # Show the constructed command
+          echo "Command to execute: $LABEL_COMMAND"
+          
           # Apply labels to the issue
-          eval "gh issue edit ${{ inputs.issue-number }} $ARGS"
+          eval "$LABEL_COMMAND"
