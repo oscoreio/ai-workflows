@@ -93,11 +93,12 @@ jobs:
           echo "###################################################"
           
           ARGS=""
-          echo "$NEW_LABELS" | while read -r label; do
+          # Process labels without using pipe to avoid subshell variable scope issues
+          while read -r label; do
             if [ -n "$label" ]; then
               ARGS="$ARGS --add-label \"$label\""
             fi
-          done
+          done <<< "$NEW_LABELS"
           
           # Get current issue body to preserve it
           # Note: When running `gh issue edit` in non-interactive mode (like in CI), 
