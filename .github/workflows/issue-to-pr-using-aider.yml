@@ -654,7 +654,7 @@ jobs:
             }
             
             // Create workflow run link
-            const workflowRunLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}/job/${github.job}`;
+            const workflowRunLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}`;
             
             // Get the PR URL if available, add link to PR
             let prLink = '';

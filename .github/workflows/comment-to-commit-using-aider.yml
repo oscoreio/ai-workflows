@@ -426,7 +426,7 @@ jobs:
             }
             
             // Create workflow run link - fix to use correct format
-            const workflowRunLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}/job/${github.job}`;
+            const workflowRunLink = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId || github.run_id || process.env.GITHUB_RUN_ID}`;
             
             if (${{ inputs.is-review }}) {
               // Create a new reply to the review comment
