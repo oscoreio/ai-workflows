@@ -36,7 +36,7 @@ jobs:
       # test-command: 'npm build'
     secrets:
       # You need set one of these keys
-      openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }} # while it allows to use DeepSeek R1 for free, it still required to rate-limiting you
+      openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }} # while it allows to use models for free, it still required to rate-limiting you
       openai-api-key: ${{ secrets.OPENAI_API_KEY }}
       anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
       groq-api-key: ${{ secrets.GROQ_API_KEY }}
@@ -79,7 +79,41 @@ jobs:
       # test-command: 'npm build'
     secrets:
       # You need set one of these keys
-      openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }} # while it allows to use DeepSeek R1 for free, it still required to rate-limiting you
+      openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }} # while it allows to use models for free, it still required to rate-limiting you
+      openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+      anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+      groq-api-key: ${{ secrets.GROQ_API_KEY }}
+      gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+      cohere-api-key: ${{ secrets.COHERE_API_KEY }}
+      deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
+```
+
+## Auto-labeling
+
+Automatically labels new issues using AI analysis. The workflow:
+- Retrieves issue content and available repository labels
+- Uses LangChain CLI to determine appropriate labels
+- Applies the suggested labels without manual intervention
+
+Create `.github/workflows/auto-labeling.yml` with the following content:
+```yaml
+name: Auto-labeling issue
+on:
+  issues:
+    types:
+      - opened
+
+permissions:
+  issues: write
+
+jobs:
+  auto-labeling:
+    uses: oscoreio/ai-workflows/.github/workflows/auto-labeling.yml@main
+    with:
+      issue-number: ${{ github.event.issue.number }}
+    secrets:
+      # You need set one of these keys
+      openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }} # while it allows to use models for free, it still required to rate-limiting you
       openai-api-key: ${{ secrets.OPENAI_API_KEY }}
       anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
       groq-api-key: ${{ secrets.GROQ_API_KEY }}

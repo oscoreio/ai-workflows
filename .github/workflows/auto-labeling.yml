@@ -1,0 +1,97 @@
+name: Auto-labeling issue
+on:
+  workflow_call:
+    inputs:
+      issue-number:
+        description: "Issue number"
+        required: true
+        type: number
+      model:
+        description: "Model to use"
+        required: false
+        type: string
+        default: "o4-mini"
+      provider:
+        description: "Provider to use"
+        required: false
+        type: string
+        default: "openai"
+    secrets:
+      personal-access-token:
+        description: "Personal Access Token for PR creation"
+        required: false
+      openai-api-key:
+        description: "OpenAI API key"
+        required: false
+      anthropic-api-key:
+        description: "Anthropic API Key"
+        required: false
+      groq-api-key:
+        description: "Groq API Key"
+        required: false
+      gemini-api-key:
+        description: "Gemini API Key"
+        required: false
+      cohere-api-key:
+        description: "Cohere API Key"
+        required: false
+      openrouter-api-key:
+        description: "OpenRouter API Key"
+        required: false
+      deepseek-api-key:
+        description: "Deepseek API Key"
+        required: false
+
+jobs:
+  label_issue:
+    permissions:
+      issues: write
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+          
+      - name: Install LangChain CLI
+        run: dotnet tool install --global langchain.cli --prerelease
+
+      - name: Prepare prompt
+        env:
+          GITHUB_TOKEN: ${{ secrets.personal-access-token || secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_DATA=$(gh issue view ${{ inputs.issue-number }})
+          AVAILABLE_LABELS=$(gh label list --jq '.[].name' --json name | tr '\n' ',')
+          
+          {
+            echo "Return labels for issue with these data:"
+            echo "----------------------------------------"
+            echo "$ISSUE_DATA"
+            echo "----------------------------------------"
+            echo "Available labels: $AVAILABLE_LABELS"
+          } > .prompt.md
+          
+          echo "###################################################"
+          echo "PROMPT"
+          cat .prompt.md
+          echo "###################################################"
+
+          NEW_LABELS=$(langchain do --format string[] --input-file .prompt.md --provider free --model free)
+
+          echo "###################################################"
+          echo "ANSWER"
+          echo "$NEW_LABELS"
+          echo "###################################################"
+          
+          # Example output in comment, not part of execution
+          echo "# Example output: --add-label \"vector databases\" --add-label \"enhancement\"" 
+          
+          # Construct arguments from NEW_LABELS
+          ARGS=""
+          echo "$NEW_LABELS" | while read -r label; do
+            if [ -n "$label" ]; then
+              ARGS="$ARGS --add-label \"$label\""
+            fi
+          done
+          
+          # Apply labels to the issue
+          eval "gh issue edit ${{ inputs.issue-number }} $ARGS"
