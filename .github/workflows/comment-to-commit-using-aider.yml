@@ -82,9 +82,8 @@ jobs:
       
     runs-on: ubuntu-latest
     steps:
-      - name: Extract PR info and comment body
+      - name: Handle comment reactions
         uses: actions/github-script@v7
-        id: extract_info
         with:
           script: |
             if (${{ inputs.is-review }}) {
@@ -142,6 +141,11 @@ jobs:
               }
             }
 
+      - name: Extract PR info and comment body
+        uses: actions/github-script@v7
+        id: extract_info
+        with:
+          script: |
             // Extract PR number from PR URL
             const prUrl = "${{ inputs.pr-url }}";
             const prNumber = parseInt(prUrl.split('/').pop());
@@ -234,19 +238,31 @@ jobs:
           git config --local user.email "bot@aider.com"
           git config --local user.name "github-actions[bot]"
 
-      - name: Create prompt
-        uses: actions/github-script@v7
-        id: create_prompt
-        with:
-          result-encoding: string
-          script: |
-            let commentBody = "${{ steps.extract_info.outputs.comment_body }}";
-            if (${{ inputs.is-review }}) {
-              commentBody = `File: ${{ steps.extract_info.outputs.file_path }}\nPosition: ${{ steps.extract_info.outputs.position }}\nDiff: ${{ steps.extract_info.outputs.diff_hunk }}`;
-            }
-            // Remove '@aider' from the comment
-            const prompt = commentBody.replace(/@aider/g, '').trim();
-            return `Apply all necessary changes in one step(it automated and will be just commited so no ask user anything) based on below user comment. \Comment body: ${prompt}`;
+      - name: Create prompt file
+        shell: bash
+        run: |
+          {
+            echo "Apply all necessary changes in one step (it is automated and will be just committed so do not ask user anything) based on below user comment."
+            echo ""
+            
+            if [ "${{ inputs.is-review }}" == "true" ]; then
+              echo "File: ${{ steps.extract_info.outputs.file_path }}"
+              echo "Position: ${{ steps.extract_info.outputs.position }}"
+              echo "Diff:"
+              echo '```'
+              echo "${{ steps.extract_info.outputs.diff_hunk }}"
+              echo '```'
+            else
+              # Remove '@aider' from the comment body and output it
+              comment_body="${{ steps.extract_info.outputs.comment_body }}"
+              echo "${comment_body//@aider/}"
+            fi
+          } > .aider.prompt.md
+          
+          echo "###################################################"
+          echo "Aider Prompt:"
+          cat .aider.prompt.md
+          echo "###################################################"
 
       - name: Try extract model from labels
         uses: actions/github-script@v7
@@ -351,7 +367,7 @@ jobs:
             --yes-always \
             --watch-files \
             --skip-sanity-check-repo \
-            --message "${{ steps.create_prompt.outputs.result }}" \
+            --message-file .aider.prompt.md \
             --no-auto-commits \
             --map-tokens ${{ inputs.map-tokens }} \
             ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }} \
@@ -466,9 +482,11 @@ jobs:
       - name: Show extracted data
         if: always()
         run: |
+          echo "PR Number: ${{ steps.extract_info.outputs.pr_number }}"
+          echo "Issue Number: ${{ steps.extract_info.outputs.issue_number }}"
+          echo "Branch: ${{ steps.extract_info.outputs.branch }}"
           echo "model: ${{ steps.try_extract_model_from_labels.outputs.result }}"
           echo "reasoning_effort: ${{ steps.try_extract_reasoning_effort_from_labels.outputs.result }}"
-          echo "branch: ${{ steps.branch.outputs.branch_name }}"
-          echo "pr-name: ${{ steps.pr.outputs.name }}"
-          echo "pr-name: ${{ steps.pr-description.outputs.value }}"
-          echo "has_changes: ${{ steps.changes.outputs.has_changes }}"
+          echo "file_path: ${{ steps.extract_info.outputs.file_path }}"
+          echo "position: ${{ steps.extract_info.outputs.position }}"
+          echo "diff_hunk: ${{ steps.extract_info.outputs.diff_hunk }}"
