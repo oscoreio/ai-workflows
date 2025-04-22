@@ -71,18 +71,9 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
           GROQ_API_KEY: ${{ secrets.groq-api-key }}
         run: |
-          ISSUE_DATA=$(gh issue view ${{ inputs.issue-number }})
-          AVAILABLE_LABELS=$(gh label list)
-          
           {
-            echo "Return suitable labels(names) for issue with these data:"
-            echo "----------------------------------------"
-            echo "$ISSUE_DATA"
-            echo "----------------------------------------"
-            echo "Available labels:"
-            echo "----------------------------------------"
-            echo "$AVAILABLE_LABELS"
-            echo "----------------------------------------"
+            echo "You work in the ${{ github.repository }} repository on the issue #${{ inputs.issue-number }}"
+            echo "Retrieve issue body/comments and available labels, and update the issue with suitable labels."
             if [ -n "${{ inputs.instructions }}" ]; then
               echo "Additional instructions for label selection: ${{ inputs.instructions }}"
             fi
@@ -93,29 +84,9 @@ jobs:
           cat .prompt.md
           echo "###################################################"
 
-          NEW_LABELS=$(langchain do --format lines --input-file .prompt.md --provider ${{ inputs.provider }} --model ${{ inputs.model }})
-
-          echo "###################################################"
-          echo "ANSWER"
-          echo "$NEW_LABELS"
-          echo "###################################################"
-          
-          ARGS=""
-          # Process labels without using pipe to avoid subshell variable scope issues
-          while read -r label; do
-            if [ -n "$label" ]; then
-              ARGS="$ARGS --add-label \"$label\""
-            fi
-          done <<< "$NEW_LABELS"
-          
-          # Get current issue body to preserve it
-          # Note: When running `gh issue edit` in non-interactive mode (like in CI), 
-          # it requires at least one field to edit flag. Since we only want to modify labels
-          # without changing the body, we must fetch the current body and use --body-file
-          # to effectively keep it unchanged.
-          gh issue view ${{ inputs.issue-number }} --json body --jq .body > issue-body.txt
-          
-          COMMAND="gh issue edit ${{ inputs.issue-number }} --body-file issue-body.txt $ARGS"
-          
-          echo "Command to execute: $COMMAND"
-          eval "$COMMAND"
+          langchain do
+            --format lines
+            --tools github
+            --input-file .prompt.md
+            --provider ${{ inputs.provider }}
+            --model ${{ inputs.model }}
