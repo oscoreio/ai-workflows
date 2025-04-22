@@ -84,9 +84,9 @@ jobs:
           cat .prompt.md
           echo "###################################################"
 
-          langchain do
-            --format lines
-            --tools github
-            --input-file .prompt.md
-            --provider ${{ inputs.provider }}
+          langchain do \
+            --format lines \
+            --tools github \
+            --input-file .prompt.md \
+            --provider ${{ inputs.provider }} \
             --model ${{ inputs.model }}
