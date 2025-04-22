@@ -6,6 +6,11 @@ on:
         description: "Issue number"
         required: true
         type: number
+      instructions:
+        description: "Additional instructions for label selection"
+        required: false
+        type: string
+        default: ""
       model:
         description: "Model to use"
         required: false
@@ -78,6 +83,9 @@ jobs:
             echo "----------------------------------------"
             echo "$AVAILABLE_LABELS"
             echo "----------------------------------------"
+            if [ -n "${{ inputs.instructions }}" ]; then
+              echo "Additional instructions for label selection: ${{ inputs.instructions }}"
+            fi
           } > .prompt.md
           
           echo "###################################################"
