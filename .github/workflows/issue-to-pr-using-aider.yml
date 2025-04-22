@@ -177,7 +177,7 @@ jobs:
           cat .aider.suitable-files.prompt.md
           echo "###################################################"
 
-          suitable_files=$(langchain do --format string[] --input-file .aider.suitable-files.prompt.md --provider ${{ inputs.provider }})
+          suitable_files=$(langchain do --format lines --input-file .aider.suitable-files.prompt.md --provider ${{ inputs.provider }})
 
           echo "###################################################"
           echo "Suitable files:ANSWER"
@@ -220,7 +220,7 @@ jobs:
           cat .aider.suitable-files-with-deps.prompt.md
           echo "###################################################"
           
-          suitable_files_with_deps=$(langchain do --format string[] --input-file .aider.suitable-files-with-deps.prompt.md --provider ${{ inputs.provider }})
+          suitable_files_with_deps=$(langchain do --format lines --input-file .aider.suitable-files-with-deps.prompt.md --provider ${{ inputs.provider }})
           
           echo "###################################################"
           echo "Suitable files with dependencies:ANSWER"
@@ -546,13 +546,11 @@ jobs:
             echo "$chat_history"
             echo '```'
             echo "Returns answer in the format of a PR title: 'fix(#123): Fix the bug' or 'feat(#123): Add new feature'."
-            echo "Do not incude any whitespaces on the start or end of the title."
-            echo "Do not incude any markdown formatting in the title."
           } > .aider.pr-name.prompt.md
           
           cat .aider.pr-name.prompt.md
           
-          name=$(langchain do --format string --input-file .aider.pr-name.prompt.md --provider ${{ inputs.provider }})
+          name=$(langchain do --format ConventionalCommit --input-file .aider.pr-name.prompt.md --provider ${{ inputs.provider }})
           
           echo $name
           echo "name=$name" >> $GITHUB_OUTPUT
