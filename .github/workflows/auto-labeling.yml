@@ -73,7 +73,7 @@ jobs:
         run: |
           {
             echo "You work in the ${{ github.repository }} repository on the issue #${{ inputs.issue-number }}"
-            echo "Retrieve issue body/comments and available labels, and update the issue with suitable labels."
+            echo "Always retrieve issue body/comments and always retrieve available labels (because almost always there is custom labels), and always call `update_issue` tool to update the issue with suitable labels. Don't change body and other data."
             if [ -n "${{ inputs.instructions }}" ]; then
               echo "Additional instructions for label selection: ${{ inputs.instructions }}"
             fi
@@ -84,9 +84,14 @@ jobs:
           cat .prompt.md
           echo "###################################################"
 
-          langchain do \
-            --format lines \
-            --tools github \
+          LOG = $(langchain do \
+            --debug
+            --tools github[issues] \
             --input-file .prompt.md \
             --provider ${{ inputs.provider }} \
-            --model ${{ inputs.model }}
+            --model ${{ inputs.model }})
+          
+          echo "###################################################"
+          echo "LOG"
+          echo "$LOG"
+          echo "###################################################"
