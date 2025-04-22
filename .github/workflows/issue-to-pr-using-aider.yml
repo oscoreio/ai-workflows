@@ -156,20 +156,15 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
           GROQ_API_KEY: ${{ secrets.groq-api-key }}
         run: |
-          # Find files and strip the './' prefix using sed
-          file_list=$(find . -type f | sed 's|^\./||')
-          issue_data=$(gh issue view ${{ inputs.issue-number }})
-          issue_comments=$(gh issue view ${{ inputs.issue-number }} --comments)
-    
-          # Create suitable files prompt; escape backticks to avoid unwanted command substitution
           {
-            echo "Return suitable files for issue with these data (not more than 10 files):"
-            echo "$issue_data"
-            echo "$issue_comments"
-            echo "------------------------------"
-            echo "List of all files in the repo:"
-            echo "$file_list"
-            echo "------------------------------"
+            echo "Objective: Identify a list of relevant files (maximum 10) needed to resolve issue #${{ inputs.issue-number }} based on the details provided below."
+            echo ""
+            echo "Instructions:"
+            echo "1. Retrieve and analyze the issue details and comments."
+            echo "2. Use the search tool to find potentially relevant files in the codebase."
+            echo "3. Select the most suitable files from the search results (maximum 10 total)."
+            echo "4. Consider files explicitly mentioned, related to error messages/functionality, and potential dependencies (e.g., tests, calling functions)."
+            echo "5. Return the final list of file paths, one path per line."
           } > .aider.suitable-files.prompt.md
           
           echo "###################################################"
@@ -177,54 +172,11 @@ jobs:
           cat .aider.suitable-files.prompt.md
           echo "###################################################"
 
-          suitable_files=$(langchain do --format lines --input-file .aider.suitable-files.prompt.md --provider ${{ inputs.provider }})
+          suitable_files=$(langchain do --tools filesystem github --format lines --input-file .aider.suitable-files.prompt.md --provider ${{ inputs.provider }})
 
           echo "###################################################"
           echo "Suitable files:ANSWER"
           echo "$suitable_files"
-          echo "###################################################"
-          
-          # Create suitable files with dependecies prompt; escape backticks to avoid unwanted command substitution
-          {
-            echo "Return suitable files and their first-level dependencies files (not more than 15 files) for issue with these data:"
-            echo "$issue_data"
-            echo "$issue_comments"
-            echo "------------------------------"
-            echo "List of all files in the repo:"
-            echo "$file_list"
-            echo "------------------------------"
-          } > .aider.suitable-files-with-deps.prompt.md
-          
-          # Write all content of suitable files to .aider.suitable-files-with-deps.prompt.md
-          for file in $suitable_files; do
-            # Check if the file exists
-            if [ -f "$file" ]; then
-              echo "Suitable file: $file"
-              # Check if the file is not too large
-              if [ $(wc -l < "$file") -lt 1000 ]; then
-                {
-                  echo ""
-                  echo "$file"
-                  echo "------------------------------"
-                  cat $file
-                  echo "------------------------------"
-                } >> .aider.suitable-files-with-deps.prompt.md
-              else
-                echo "Skipping file $file because it is too large"
-              fi
-            fi
-          done
-          
-          echo "###################################################"
-          echo "Suitable files with dependencies:PROMPT"
-          cat .aider.suitable-files-with-deps.prompt.md
-          echo "###################################################"
-          
-          suitable_files_with_deps=$(langchain do --format lines --input-file .aider.suitable-files-with-deps.prompt.md --provider ${{ inputs.provider }})
-          
-          echo "###################################################"
-          echo "Suitable files with dependencies:ANSWER"
-          echo "$suitable_files_with_deps"
           echo "###################################################"
           
           # Create full Aider prompt
@@ -241,7 +193,7 @@ jobs:
             echo ""
             echo "List of suitable files in the repo:"
             echo '```'
-            echo "$suitable_files_with_deps"
+            echo "$suitable_files"
             echo '```'
           } > .aider.prompt.md
           
