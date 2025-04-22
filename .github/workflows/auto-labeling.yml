@@ -60,7 +60,7 @@ jobs:
       - name: Install LangChain CLI
         run: dotnet tool install --global langchain.cli --prerelease
 
-      - name: Prepare prompt
+      - name: Run agent with tools
         env:
           GITHUB_TOKEN: ${{ secrets.personal-access-token || secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.openai-api-key }}
