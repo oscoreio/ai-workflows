@@ -84,8 +84,8 @@ jobs:
           cat .prompt.md
           echo "###################################################"
 
-          LOG = $(langchain do \
-            --debug
+          LOG=$(langchain do \
+            --debug \
             --tools github[issues] \
             --input-file .prompt.md \
             --provider ${{ inputs.provider }} \
