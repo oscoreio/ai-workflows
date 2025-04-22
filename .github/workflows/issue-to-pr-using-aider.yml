@@ -46,10 +46,6 @@ on:
         required: false
         type: number
         default: 5000
-      figma-api-token:
-        description: "Figma API Token"
-        required: false
-        type: string
     secrets:
       user-email:
         description: "Email to set in git config --local user.email"
@@ -80,6 +76,9 @@ on:
         required: false
       deepseek-api-key:
         description: "Deepseek API Key"
+        required: false
+      figma-api-key:
+        description: "Figma API Key"
         required: false
 
 jobs:
@@ -159,7 +158,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
           DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
           GROQ_API_KEY: ${{ secrets.groq-api-key }}
-          FIGMA_API_TOKEN: ${{ secrets.figma-api-token }}
+          FIGMA_API_KEY: ${{ secrets.figma-api-key }}
         run: |
           {
             echo "You are a professional programmer with 20 years of experience. You work in the ${{ github.repository }} repository on the issue #${{ inputs.issue-number }}"
