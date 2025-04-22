@@ -46,6 +46,10 @@ on:
         required: false
         type: number
         default: 5000
+      figma-api-token:
+        description: "Figma API Token"
+        required: false
+        type: string
     secrets:
       user-email:
         description: "Email to set in git config --local user.email"
@@ -155,8 +159,10 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
           DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
           GROQ_API_KEY: ${{ secrets.groq-api-key }}
+          FIGMA_API_TOKEN: ${{ secrets.figma-api-token }}
         run: |
           {
+            echo "You are a professional programmer with 20 years of experience. You work in the ${{ github.repository }} repository on the issue #${{ inputs.issue-number }}"
             echo "Objective: Identify a list of relevant files (maximum 10) needed to resolve issue #${{ inputs.issue-number }} based on the details provided below."
             echo ""
             echo "Instructions:"
@@ -172,13 +178,43 @@ jobs:
           cat .aider.suitable-files.prompt.md
           echo "###################################################"
 
-          suitable_files=$(langchain do --tools filesystem github --format lines --input-file .aider.suitable-files.prompt.md --provider ${{ inputs.provider }})
+          suitable_files=$(langchain do --tools filesystem github[issues] --format lines --input-file .aider.suitable-files.prompt.md --provider ${{ inputs.provider }})
 
           echo "###################################################"
           echo "Suitable files:ANSWER"
           echo "$suitable_files"
           echo "###################################################"
           
+          # Detect Figma links and fetch data if found
+          {
+            echo "You are a professional programmer with 20 years of experience. You work in the ${{ github.repository }} repository on the issue #${{ inputs.issue-number }}"
+            echo "Objective: First, identify any Figma design links (URLs starting with https://www.figma.com/file/... or https://www.figma.com/design/...) mentioned in issue #${{ inputs.issue-number }} or its comments using the github tool."
+            echo ""
+            echo "Instructions:"
+            echo "1. Analyze the issue #${{ inputs.issue-number }} title, body, and comments."
+            echo "2. Search for Figma URLs."
+            echo "3. If Figma URLs are found:"
+            echo "   a. Use the figma tool to access the Figma files using the found URLs."
+            echo "   b. Extract key layout information, component structure, and styling details relevant to the issue."
+            echo "   c. Return a json of the relevant design aspects."
+            echo "4. If NO Figma URLs are found, return the exact string 'No Figma links found.'"
+          } > .aider.figma-details.prompt.md
+
+          echo "###################################################"
+          echo "Figma Details:PROMPT"
+          cat .aider.figma-details.prompt.md
+          echo "###################################################"
+
+          # Use --tools github figma and pass the token via env
+          figma_details=$(langchain do --tools github[issues] figma --format json --input-file .aider.figma-details.prompt.md --provider ${{ inputs.provider }})
+
+          echo "###################################################"
+          echo "Figma Details:ANSWER"
+          echo "$figma_details"
+          echo "###################################################"
+          
+          issue_data=$(gh issue view ${{ inputs.issue-number }})
+          issue_comments=$(gh issue view ${{ inputs.issue-number }} --comments)
           # Create full Aider prompt
           {
             echo "You are a professional software developer and should produce the best possible code, preferably keeping it concise."
@@ -195,6 +231,15 @@ jobs:
             echo '```'
             echo "$suitable_files"
             echo '```'
+            
+            # Conditionally add Figma data to the prompt
+            if [[ -n "$figma_details" && "$figma_details" != "No Figma links found." ]]; then
+              echo ""
+              echo "Figma Design Details:"
+              echo '```'
+              echo "$figma_details"
+              echo '```'
+            fi
           } > .aider.prompt.md
           
           echo "###################################################"
@@ -355,7 +400,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
           DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
           GROQ_API_KEY: ${{ secrets.groq-api-key }}
-          
+
         run: |
           pip install aider-chat
           
