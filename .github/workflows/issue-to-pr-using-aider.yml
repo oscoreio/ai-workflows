@@ -517,7 +517,7 @@ jobs:
             --watch-files \
             --skip-sanity-check-repo \
             --message-file .aider.prompt.md \
-            --no-auto-commits \
+            --auto-commits \
             --map-tokens ${{ inputs.map-tokens }} \
             --no-detect-urls \
             ${{ steps.process_images.outputs.result }} \
@@ -588,14 +588,15 @@ jobs:
         continue-on-error: true
         run: ${{ inputs.autofix-command }}
   
-      - name: Check for changes
+      - name: Check if branch has new commits
         id: changes
         run: |
-          CHANGED=$(git diff --name-only -- . ':!.gitignore')
-          if [ -z "$CHANGED" ]; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-          else
+          git fetch origin ${{ inputs.default-branch }}
+          COMMITS=$(git rev-list origin/${{ inputs.default-branch }}..HEAD --count)
+          if [ "$COMMITS" -gt 0 ]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Generate PR name
@@ -690,10 +691,7 @@ jobs:
 
       - name: Push changes
         if: steps.changes.outputs.has_changes == 'true'
-        run: |
-          git add . ':!.gitignore'
-          git commit -m "${{ steps.pr.outputs.name || 'fix: Fixed issue' }}"
-          git push --force-with-lease -u origin ${{ steps.branch.outputs.branch_name }}
+        run: git push --force-with-lease -u origin ${{ steps.branch.outputs.branch_name }}
 
       - name: Wait for 15 seconds
         if: steps.changes.outputs.has_changes == 'true'
