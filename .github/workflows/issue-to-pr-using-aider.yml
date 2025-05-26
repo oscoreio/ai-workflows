@@ -631,7 +631,7 @@ jobs:
             echo '```'
             echo "$chat_history"
             echo '```'
-            echo "Returns answer in the format of a PR title: 'fix(#123): Fix the bug' or 'feat(#123): Add new feature'."
+            echo "Returns scope like #123 where 123 is the issue number."
           } > .aider.pr-name.prompt.md
           
           cat .aider.pr-name.prompt.md
