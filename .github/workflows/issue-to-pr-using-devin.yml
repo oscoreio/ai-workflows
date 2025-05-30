@@ -59,14 +59,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          issue_data=$(gh issue view ${{ inputs.issue-number }})
-          issue_comments=$(gh issue view ${{ inputs.issue-number }} --comments)
+          issue_data_raw=$(gh issue view ${{ inputs.issue-number }})
+          issue_comments_raw=$(gh issue view ${{ inputs.issue-number }} --comments)
 
-          curl --request POST \
-            --url https://api.devin.ai/v1/sessions \
-            --header "Authorization: Bearer ${{ secrets.devin-api-key }}" \
-            --header 'Content-Type: application/json' \
-            --data '{
-              "prompt": "Fix the issue #${{ inputs.issue-number }} in the repository ${{ github.repository_owner }}/${{ github.repository }} and create a pull request. Use the following context: \n\nIssue data: \n```\n$issue_data\n```\n\nIssue comments: \n```\n$issue_comments\n```",
-              "idempotent": true
-            }'
+          # Prepare the prompt text
+          # Note: We are creating a string that will be interpreted by the shell.
+          # The actual heredoc will be formed and processed by the shell when the workflow runs.
+          prompt_text_heredoc="Fix the issue #${{ inputs.issue-number }} in the repository ${{ github.repository }} and create a pull request. Use the following context: \n\nIssue data: \n\`\`\`\n$issue_data_raw\n\`\`\`\n\nIssue comments: \n\`\`\`\n$issue_comments_raw\n\`\`\`"
+
+          # Use jq to create a valid JSON payload, escaping the prompt text appropriately
+          # Pass the heredoc content as an argument to jq
+          json_payload=$(jq -n --arg prompt "$prompt_text_heredoc" '{prompt: $prompt, idempotent: true}')
+
+          # Make the API call with the JSON payload
+          curl --request POST \\
+            --url https://api.devin.ai/v1/sessions \\
+            --header "Authorization: Bearer ${{ secrets.devin-api-key }}" \\
+            --header 'Content-Type: application/json' \\
+            --data "$json_payload"
