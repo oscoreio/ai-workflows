@@ -72,8 +72,8 @@ jobs:
           json_payload=$(jq -n --arg prompt "$prompt_text_heredoc" '{prompt: $prompt, idempotent: true}')
 
           # Make the API call with the JSON payload
-          curl --request POST \\
-            --url https://api.devin.ai/v1/sessions \\
-            --header "Authorization: Bearer ${{ secrets.devin-api-key }}" \\
-            --header 'Content-Type: application/json' \\
+          curl --request POST \
+            --url https://api.devin.ai/v1/sessions \
+            --header "Authorization: Bearer ${{ secrets.devin-api-key }}" \
+            --header 'Content-Type: application/json' \
             --data "$json_payload"
