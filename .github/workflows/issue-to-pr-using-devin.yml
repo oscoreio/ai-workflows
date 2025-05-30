@@ -6,6 +6,11 @@ on:
         description: "Issue number"
         required: true
         type: number
+      max-acu-limit:
+        description: "Maximum ACU limit for the Devin session"
+        required: false
+        type: number
+        default: 5
     secrets:
       devin-api-key:
         description: "Devin API key"
@@ -85,7 +90,8 @@ jobs:
           # Create JSON payload using jq with file input for proper escaping
           jq -n --rawfile prompt prompt.txt '{
             prompt: $prompt,
-            idempotent: true
+            idempotent: true,
+            max_acu_limit: ${{ inputs.max-acu-limit }}
           }' > payload.json
           
           # Make the API call
