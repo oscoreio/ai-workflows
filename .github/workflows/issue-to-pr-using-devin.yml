@@ -59,21 +59,44 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          issue_data_raw=$(gh issue view ${{ inputs.issue-number }})
-          issue_comments_raw=$(gh issue view ${{ inputs.issue-number }} --comments)
-
-          # Prepare the prompt text
-          # Note: We are creating a string that will be interpreted by the shell.
-          # The actual heredoc will be formed and processed by the shell when the workflow runs.
-          prompt_text_heredoc="Fix the issue #${{ inputs.issue-number }} in the repository ${{ github.repository }} and create a pull request. Use the following context: \n\nIssue data: \n\`\`\`\n$issue_data_raw\n\`\`\`\n\nIssue comments: \n\`\`\`\n$issue_comments_raw\n\`\`\`"
-
-          # Use jq to create a valid JSON payload, escaping the prompt text appropriately
-          # Pass the heredoc content as an argument to jq
-          json_payload=$(jq -n --arg prompt "$prompt_text_heredoc" '{prompt: $prompt, idempotent: true}')
-
-          # Make the API call with the JSON payload
-          curl --request POST \
+          # Fetch issue data in human-readable format
+          gh issue view ${{ inputs.issue-number }} > issue_data.txt
+          gh issue view ${{ inputs.issue-number }} --comments > issue_comments.txt
+          
+          # Create the prompt text
+          cat > prompt.txt << 'EOF'
+          Fix the issue #${{ inputs.issue-number }} in the repository ${{ github.repository }} and create a pull request.
+          
+          Use the following context:
+          
+          Issue data:
+          ```
+          EOF
+          
+          # Add issue data and comments to prompt
+          cat issue_data.txt >> prompt.txt
+          echo '```' >> prompt.txt
+          echo '' >> prompt.txt
+          echo 'Issue comments:' >> prompt.txt
+          echo '```' >> prompt.txt
+          cat issue_comments.txt >> prompt.txt
+          echo '```' >> prompt.txt
+          
+          # Create JSON payload using jq with file input for proper escaping
+          jq -n --rawfile prompt prompt.txt '{
+            prompt: $prompt,
+            idempotent: true
+          }' > payload.json
+          
+          # Make the API call
+          response=$(curl --silent --request POST \
             --url https://api.devin.ai/v1/sessions \
             --header "Authorization: Bearer ${{ secrets.devin-api-key }}" \
             --header 'Content-Type: application/json' \
-            --data "$json_payload"
+            --data @payload.json)
+          
+          echo "Devin session created successfully"
+          echo "$response" | jq -r '.session_url // "No session URL in response"'
+          
+          # Clean up temporary files
+          rm -f issue_data.txt issue_comments.txt prompt.txt payload.json
