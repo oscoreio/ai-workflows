@@ -1,0 +1,27 @@
+name: Issue to PR using Devin
+on:
+  workflow_call:
+    inputs:
+      issue-number:
+        description: "Issue number"
+        required: true
+        type: number
+    secrets:
+      devin-api-key:
+        description: "Devin API key"
+        required: true
+
+jobs:
+  create-devin-session:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Devin session
+        run: |
+          curl --request POST \
+            --url https://api.devin.ai/v1/sessions \
+            --header "Authorization: Bearer ${{ secrets.devin-api-key }}" \
+            --header 'Content-Type: application/json' \
+            --data '{
+              "prompt": "Fix the issue #${{ inputs.issue-number }} in the repository ${{ github.repository_owner }}/${{ github.repository }} and create a pull request.",
+              "idempotent": true
+            }'
