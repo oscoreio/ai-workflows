@@ -51,6 +51,7 @@ jobs:
   label_issue:
     permissions:
       issues: write
+      contents: read
 
     runs-on: ubuntu-latest
     steps:
