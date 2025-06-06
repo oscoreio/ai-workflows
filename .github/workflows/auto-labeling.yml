@@ -58,8 +58,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
           
-      - name: Install LangChain CLI
-        run: dotnet tool install --global langchain.cli --prerelease
+      - name: Install AI CLI
+        run: dotnet tool install --global tryagi.ai --prerelease
 
       - name: Prepare prompt
         env:
@@ -94,7 +94,7 @@ jobs:
           cat .prompt.md
           echo "###################################################"
 
-          NEW_LABELS=$(langchain do --format lines --input-file .prompt.md --provider ${{ inputs.provider }} --model ${{ inputs.model }})
+          NEW_LABELS=$(ai --format lines --input-file .prompt.md --provider ${{ inputs.provider }} --model ${{ inputs.model }})
 
           echo "###################################################"
           echo "ANSWER"
