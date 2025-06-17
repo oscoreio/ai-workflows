@@ -92,7 +92,7 @@ jobs:
 
 Automatically labels new issues using AI analysis. The workflow:
 - Retrieves issue content and available repository labels
-- Uses LangChain CLI to determine appropriate labels
+- Uses AI CLI to determine appropriate labels
 - Applies the suggested labels without manual intervention
 
 Create `.github/workflows/auto-labeling.yml` with the following content:

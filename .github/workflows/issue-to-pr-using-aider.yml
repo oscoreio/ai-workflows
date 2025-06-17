@@ -135,6 +135,20 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
+      - name: Install AI CLI
+        run: dotnet tool install --global tryAGI.AI --prerelease
+
+      - name: Verify there are at least one valid API key
+        env:
+          OPENAI_API_KEY: ${{ secrets.openai-api-key }}
+          OPENROUTER_API_KEY: ${{ secrets.openrouter-api-key }}
+          ANTHROPIC_API_KEY: ${{ secrets.anthropic-api-key }}
+          COHERE_API_KEY: ${{ secrets.cohere-api-key }}
+          GEMINI_API_KEY: ${{ secrets.gemini-api-key }}
+          DEEPSEEK_API_KEY: ${{ secrets.deepseek-api-key }}
+          GROQ_API_KEY: ${{ secrets.groq-api-key }}
+        run: ai --input "Answer 123" --provider ${{ inputs.provider }}
+
       - name: Generate branch name
         id: branch
         run: echo "branch_name=aider/issue-${{ inputs.issue-number }}_$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
@@ -143,9 +157,6 @@ jobs:
         run: |
           git checkout -b ${{ steps.branch.outputs.branch_name }} origin/${{ inputs.default-branch }}
           git rebase ${{ inputs.default-branch }}
-
-      - name: Install LangChain CLI
-        run: dotnet tool install --global langchain.cli --prerelease
 
       - name: Create Aider prompt
         shell: bash
@@ -181,7 +192,7 @@ jobs:
           cat .aider.suitable-files.prompt.md
           echo "###################################################"
 
-          suitable_files=$(langchain do --format lines --input-file .aider.suitable-files.prompt.md --provider ${{ inputs.provider }})
+          suitable_files=$(ai --format lines --input-file .aider.suitable-files.prompt.md --provider ${{ inputs.provider }})
 
           echo "###################################################"
           echo "Suitable files:ANSWER"
@@ -224,7 +235,7 @@ jobs:
           cat .aider.suitable-files-with-deps.prompt.md
           echo "###################################################"
           
-          suitable_files_with_deps=$(langchain do --format lines --input-file .aider.suitable-files-with-deps.prompt.md --provider ${{ inputs.provider }})
+          suitable_files_with_deps=$(ai --format lines --input-file .aider.suitable-files-with-deps.prompt.md --provider ${{ inputs.provider }})
           
           echo "###################################################"
           echo "Suitable files with dependencies:ANSWER"
@@ -266,7 +277,7 @@ jobs:
         #   cat .aider.suitable-files.prompt.md
         #   echo "###################################################"
 
-        #   suitable_files=$(langchain do --tools filesystem github[issues] --format lines --input-file .aider.suitable-files.prompt.md --provider ${{ inputs.provider }})
+        #   suitable_files=$(ai --tools filesystem github[issues] --format lines --input-file .aider.suitable-files.prompt.md --provider ${{ inputs.provider }})
 
         #   echo "###################################################"
         #   echo "Suitable files:ANSWER"
@@ -294,7 +305,7 @@ jobs:
         #   echo "###################################################"
 
         #   # Use --tools github figma and pass the token via env
-        #   figma_details=$(langchain do --tools github[issues] figma --format json --input-file .aider.figma-details.prompt.md --provider ${{ inputs.provider }})
+        #   figma_details=$(ai --tools github[issues] figma --format json --input-file .aider.figma-details.prompt.md --provider ${{ inputs.provider }})
 
         #   echo "###################################################"
         #   echo "Figma Details:ANSWER"
@@ -636,7 +647,7 @@ jobs:
           
           cat .aider.pr-name.prompt.md
           
-          name=$(langchain do --format ConventionalCommit --input-file .aider.pr-name.prompt.md --provider ${{ inputs.provider }})
+          name=$(ai --format ConventionalCommit --input-file .aider.pr-name.prompt.md --provider ${{ inputs.provider }})
           
           echo $name
           echo "name=$name" >> $GITHUB_OUTPUT
@@ -679,7 +690,7 @@ jobs:
           
           cat .aider.pr-description.prompt.md
           
-          pr_body=$(langchain do --format markdown --input-file .aider.pr-description.prompt.md --provider ${{ inputs.provider }})
+          pr_body=$(ai --format markdown --input-file .aider.pr-description.prompt.md --provider ${{ inputs.provider }})
           
           echo $pr_body
           
@@ -727,7 +738,7 @@ jobs:
             let chatContent = '';
             const { execSync } = require('child_process');
             try {
-              chatContent = execSync('langchain do --input-file .aider.chat.history.md --input "Summarize the chat history in 20 words. Only summarize what it DID, not settings, time, version, repo-map, token count, etc. Assume that it\'s you who did the changes, not Aider. It should be a first person summary of what it did." --provider ${{ inputs.provider }}', { encoding: 'utf-8' });
+              chatContent = execSync('ai --input-file .aider.chat.history.md --input "Summarize the chat history in 20 words. Only summarize what it DID, not settings, time, version, repo-map, token count, etc. Assume that it\'s you who did the changes, not Aider. It should be a first person summary of what it did." --provider ${{ inputs.provider }}', { encoding: 'utf-8' });
               console.log('CLI Output:', chatContent);
             } catch (error) {
               console.error('Error running CLI tool:', error);

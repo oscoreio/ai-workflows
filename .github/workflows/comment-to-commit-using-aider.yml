@@ -230,8 +230,8 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
-      - name: Install LangChain CLI
-        run: dotnet tool install --global langchain.cli --prerelease
+      - name: Install AI CLI
+        run: dotnet tool install --global tryAGI.AI --prerelease
 
       - name: Setup Git user
         run: |
@@ -418,7 +418,7 @@ jobs:
             let chatContent = '';
             const { execSync } = require('child_process');
             try {
-              chatContent = execSync('langchain do --input-file .aider.chat.history.md --input "Summarize the chat history in 20 words. Only summarize what it DID, not settings, time, version, repo-map, token count, etc. Assume that it\'s you who did the changes, not Aider. It should be a first person summary of what it did." --provider ${{ inputs.provider }}', { encoding: 'utf-8' });
+              chatContent = execSync('ai --input-file .aider.chat.history.md --input "Summarize the chat history in 20 words. Only summarize what it DID, not settings, time, version, repo-map, token count, etc. Assume that it\'s you who did the changes, not Aider. It should be a first person summary of what it did." --provider ${{ inputs.provider }}', { encoding: 'utf-8' });
               console.log('CLI Output:', chatContent);
             } catch (error) {
               console.error('Error running CLI tool:', error);
