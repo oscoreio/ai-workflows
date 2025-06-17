@@ -30,7 +30,7 @@ on:
         description: "Model to use"
         required: false
         type: string
-        default: "o4-mini"
+        default: "o3"
       provider:
         description: "Provider to use"
         required: false
